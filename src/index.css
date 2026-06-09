@@ -1,0 +1,91 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@700;800;900&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+}
+
+@layer utilities {
+  .blobCommon {
+    filter: blur(80px);
+    opacity: 0.15;
+    border-radius: 50%;
+  }
+}
+
+/* Custom glow borders inspired by your original style.css */
+.card-glow-orange {
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.15);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Scrollbar customized */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0c0c14;
+}
+::-webkit-scrollbar-thumb {
+  background: #f59e0b;
+  border-radius: 10px;
+}
+
+@keyframes float {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(50px, 50px) scale(1.1);
+  }
+}
+
+.animate-blob-1 {
+  animation: float 20s infinite alternate;
+}
+
+.animate-blob-2 {
+  animation: float 20s infinite alternate -5s;
+}
+
+.bio {
+  color: var(--text-muted);
+  margin-top: 8px;
+  animation: bobble 2s ease-in-out infinite;
+}
+
+@keyframes bobble {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.timeline-action-icon {
+  animation: flashIcon 1.2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1.4rem;
+}
+
+@keyframes flashIcon {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+.timeline-content:hover .timeline-action-icon {
+  color: var(--primary);
+}

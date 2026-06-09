@@ -1,0 +1,6 @@
+{
+  "name": "Review Anime 24/7",
+  "description": "Nền tảng review phim Dragon Ball mượt mà tích hợp liên kết Shopee Affiliate và trình phát Dailymotion thông minh.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
