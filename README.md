@@ -1,20 +1,14 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+🐉 Review Anime 24/7
 
-# Run and deploy your AI Studio app
+<p align="center"> <img src="https://i.pinimg.com/originals/2e/7d/9d/2e7d9d3d75cb8d9bd86433a623e301cf.gif" width="100%" /> </p> <p align="center"> <b>🔥 Website xem anime + review + timeline Dragon Ball</b><br/> ✨ Cập nhật tập phim • Giao diện anime • Tối ưu mobile </p>
+⚡️ ⚔️ Hành trình sức mạnh Dragon Ball
+<p align="center"> <img src="https://media0.giphy.com/media/v1.Y2lkPTZjMDliOTUybWFqM2gzY3YxMWo5dDUzbWJrbTUyOGlyMWsyODF5N3BldnZsbGlvOCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/dmFXUZ5up1T896HP8B/giphy.gif" width="70%" /> </p>
+🟠 Dragon Ball (1986) — Hành trình của Goku nhỏ
+🔵 Dragon Ball Z (1989) — Saiyan, Frieza, Cell, Majin Buu
+⚡ Dragon Ball Super — Sức mạnh vượt vũ trụ
+🚀 Truy cập web
+<p align="center">
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/83c08862-cf41-44b2-9802-10d15d70153c
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+👉 <a href="https://reviews-anime-247.vercel.app/" target="_blank">
+<img src="https://img.shields.io/badge/🔥_XEM_WEB_NGAY-DRAGON_BALL-orange?style=for-the-badge" />
+</a>
