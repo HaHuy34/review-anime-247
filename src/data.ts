@@ -69,9 +69,21 @@ export const initialAnimeData: AnimeSeries[] = [
         name: "Tập 143",
         src: "https://www.dailymotion.com/embed/video/k7H0Cbi2Ar54iAGwprc",
       },
+      {
+        name: "Tập 144",
+        src: "https://www.dailymotion.com/embed/video/k3iSV7aElDLBdvGwp9Q",
+      },
+      {
+        name: "Tập 145",
+        src: "https://www.dailymotion.com/embed/video/k5MZ65YYaGpTvqGwp9M",
+      },
+      {
+        name: "Tập 146",
+        src: "https://www.dailymotion.com/embed/video/k1agXi0MNXphVTGwp9I",
+      },
       // Other episodes generated dynamically
       ...generateEmptyEpisodes(1, 135),
-      ...generateEmptyEpisodes(144, 291),
+      ...generateEmptyEpisodes(147, 291),
     ].sort((a, b) => {
       const numA = parseInt(a.name.replace(/\D/g, "")) || 0;
       const numB = parseInt(b.name.replace(/\D/g, "")) || 0;
