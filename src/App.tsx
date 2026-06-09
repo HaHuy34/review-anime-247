@@ -128,9 +128,10 @@ export default function App() {
         );
       }
     } else {
-      alert();
-      // `Tập ${String(epNum).padStart(2, "0")} hiện tại admin chưa tải lên video lên hệ thống, xin vui lòng quay lại sau!`,
-      `Scroll để xem các tập bên dưới ↓ đã ra mắt`;
+      alert(
+        `Tập ${String(epNum).padStart(2, "0")} hiện tại admin chưa tải lên video lên hệ thống. 
+        Scroll để xem các tập bên dưới ↓ ĐÃ RA MẮT`,
+      );
     }
   };
 
