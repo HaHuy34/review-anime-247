@@ -1,6 +1,6 @@
 export interface DbEpisode {
   name: string; // e.g: "Tập 136"
-  src: string;  // Dailymotion embed link
+  src: string; // Dailymotion embed link
 }
 
 export interface AnimeSeries {

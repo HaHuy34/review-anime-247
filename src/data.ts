@@ -20,7 +20,7 @@ export const initialAnimeData: AnimeSeries[] = [
     badgeText: "Khởi Nguyên",
     description:
       "Hành trình thủa nhỏ của chú bé đuôi khỉ Son Goku gặp gỡ Bulma và bắt đầu cuộc phiêu lưu tìm truyền thuyết Bảy viên Ngọc Rồng thiêng liêng rải rác khắp thế giới để thực hiện điều ước.",
-    shopeeLink: "https://s.shopee.vn/5q5fZ2j4K8",
+    shopeeLink: "https://s.shopee.vn/1gG50bIPVR",
     episodes: generateEmptyEpisodes(1, 153),
   },
   {
@@ -34,7 +34,7 @@ export const initialAnimeData: AnimeSeries[] = [
     badgeText: "Siêu Saiyan",
     description:
       "Goku lúc này đã trưởng thành, có con trai Son Gohan. Cậu phát hiện ra dòng máu chiến binh vũ trụ Saiyan của mình và bước vào những cuộc đại chiến tàn phá ngân hà bảo vệ Trái đất khỏi Freeza, Cell, và Majin Buu.",
-    shopeeLink: "https://s.shopee.vn/5fmFMl1AnK",
+    shopeeLink: "https://s.shopee.vn/70HbMQ5oaE",
     episodes: [
       // Episodes with real dailymotion sources from your main.js
       {
@@ -69,21 +69,9 @@ export const initialAnimeData: AnimeSeries[] = [
         name: "Tập 143",
         src: "https://www.dailymotion.com/embed/video/k7H0Cbi2Ar54iAGwprc",
       },
-      {
-        name: "Tập 144",
-        src: "https://www.dailymotion.com/embed/video/k3iSV7aElDLBdvGwp9Q",
-      },
-      {
-        name: "Tập 145",
-        src: "https://www.dailymotion.com/embed/video/k5MZ65YYaGpTvqGwp9M",
-      },
-      {
-        name: "Tập 146",
-        src: "https://www.dailymotion.com/embed/video/k1agXi0MNXphVTGwp9I",
-      },
       // Other episodes generated dynamically
       ...generateEmptyEpisodes(1, 135),
-      ...generateEmptyEpisodes(147, 291),
+      ...generateEmptyEpisodes(144, 291),
     ].sort((a, b) => {
       const numA = parseInt(a.name.replace(/\D/g, "")) || 0;
       const numB = parseInt(b.name.replace(/\D/g, "")) || 0;
@@ -101,7 +89,7 @@ export const initialAnimeData: AnimeSeries[] = [
     badgeText: "Bản Năng Vô Cực",
     description:
       "Sau khi Majin Buu bị đánh bại, hòa bình lập lại. Goku chạm trán với Thần Hủy Diệt Beerus và mở ra kỷ nguyên sức mạnh siêu việt của Thần Thánh, tham gia Giải Đấu Sức Mạnh giữa các vũ trụ.",
-    shopeeLink: "https://s.shopee.vn/5fmFMl1AnK",
+    shopeeLink: "https://s.shopee.vn/4VaGNqAb5r",
     episodes: generateEmptyEpisodes(1, 131),
   },
   {
@@ -115,7 +103,7 @@ export const initialAnimeData: AnimeSeries[] = [
     badgeText: "Hậu Truyện",
     description:
       "Thế giới ngoại truyện GT mang phong cách phiêu lưu cổ điển kết hợp Super Saiyan 4 đỉnh cao, cùng dự án mới nhất Daima nơi Goku bị biến nhỏ lại bởi âm mưu phép thuật.",
-    shopeeLink: "https://s.shopee.vn/5q5fZ2j4K8",
+    shopeeLink: "https://s.shopee.vn/7KuRl3r9pZ",
     episodes: generateEmptyEpisodes(1, 64),
   },
 ];

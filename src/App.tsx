@@ -12,25 +12,12 @@ import {
   ChevronUp,
   Sparkles,
 } from "lucide-react";
+
 import { initialAnimeData } from "./data";
 import { AnimeSeries } from "./types";
 import VideoModal from "./components/VideoModal";
 
 export default function App() {
-  useEffect(() => {
-    fetch("/api/visit")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.ok) {
-          console.log("Theo dõi lượt truy cập thành công:", data);
-        } else {
-          console.warn("Máy chủ ghi nhận thất bại:", data.error);
-        }
-      })
-      .catch((err) => {
-        console.error("Không thể kết nối API theo dõi:", err);
-      });
-  }, []);
   // Theme system state
   const [theme, setTheme] = useState<"dark" | "light">(
     (localStorage.getItem("theme") as "dark" | "light") || "dark",
@@ -67,6 +54,9 @@ export default function App() {
     type: "success" | "info";
   } | null>(null);
 
+  // Live today's visitor count (Vietnam timezone 00:00)
+  const [todayCount, setTodayCount] = useState<number | null>(null);
+
   // Monitor window scroll events for header and back-to-top button
   useEffect(() => {
     const handleScroll = () => {
@@ -80,6 +70,25 @@ export default function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Track visit on mount via server-side Discord Webhook proxy
+  useEffect(() => {
+    fetch("/api/visit")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok) {
+          console.log("Visit logging successful:", data);
+          if (typeof data.todayCount === "number") {
+            setTodayCount(data.todayCount);
+          }
+        } else {
+          console.warn("Visit logging backend returned error:", data.error);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to track visit:", err);
+      });
+  }, []);
+
   const triggerToast = (
     message: string,
     type: "success" | "info" = "success",
@@ -90,14 +99,9 @@ export default function App() {
     }, 4500);
   };
 
-  // Pure React state routing merged beautifully with the Shopee affiliate tag!
+  // Pure React state routing
   const handleTimelineClick = (series: AnimeSeries) => {
-    // 1. Open affiliate code in helper browser tab
-    if (series.shopeeLink) {
-      window.open(series.shopeeLink, "_blank", "noopener,noreferrer");
-    }
-
-    // 2. Pure React State transition (Instantaneous rendering, zero reload duration, flawless back-navigation)
+    // Pure React State transition (Instantaneous rendering, zero reload duration, flawless back-navigation)
     setSelectedMovie(series);
     setView("episodes");
   };
@@ -244,7 +248,8 @@ export default function App() {
                   Review Anime 24/7
                 </h1>
                 <p className="text-amber-500 font-semibold tracking-wide flex items-center justify-center gap-1.5">
-                  <span className="bio">Link phim bên dưới 👇</span>
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>Link phim bên dưới 👇</span>
                 </p>
               </div>
             </section>
@@ -284,19 +289,19 @@ export default function App() {
                           {/* Content card */}
                           <div
                             onClick={() => handleTimelineClick(item)}
-                            className={`flex-1 p-4 rounded-2xl border transition-all duration-300 flex items-center justify-between cursor-pointer
+                            className={`relative overflow-hidden flex-1 p-4 rounded-2xl border transition-all duration-300 flex items-center justify-between cursor-pointer
                               ${
                                 theme === "dark"
-                                  ? "bg-white/[0.03] hover:bg-white/[0.06] border-white/5 hover:border-amber-500/50 hover:translate-x-1.5"
-                                  : "bg-slate-50 hover:bg-slate-100/90 border-slate-250 hover:border-amber-500/55 hover:translate-x-1.5"
+                                  ? "bg-[#0b0b12]/90 hover:bg-[#0c0c16]/30 border-white/5 hover:border-amber-500/60 hover:translate-x-1.5 hover:shadow-2xl hover:shadow-amber-500/10"
+                                  : "bg-slate-50/95 hover:bg-white/30 border-slate-200 hover:border-amber-500/65 hover:translate-x-1.5 hover:shadow-2xl hover:shadow-amber-500/10"
                               }
                             `}
                           >
-                            <div className="space-y-1 text-left">
+                            <div className="relative z-10 space-y-1 text-left">
                               <h4 className="font-bold text-sm sm:text-base flex items-center flex-wrap gap-1.5">
                                 <span>{item.title}</span>
                                 {hasNewBadge && (
-                                  <span className="bg-red-500 text-white text-[11px] px-1.5 py-0.5 rounded-full font-extrabold uppercase animate-pulse tracking-wider">
+                                  <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-extrabold uppercase animate-pulse tracking-wider">
                                     NEW
                                   </span>
                                 )}
@@ -307,7 +312,7 @@ export default function App() {
                             </div>
 
                             {/* Action visual Icon */}
-                            <span className="timeline-action-icon text-lg opacity-65 group-hover:scale-125 group-hover:opacity-100 transition-all duration-300">
+                            <span className="timeline-action-icon relative z-10 text-lg opacity-65 group-hover:scale-125 group-hover:opacity-100 transition-all duration-300">
                               🎬
                             </span>
                           </div>
@@ -323,7 +328,7 @@ export default function App() {
         {/* VIEW 2: EPISODES LIST (Rendered instantaneously, smooth as butter!) */}
         {view === "episodes" && selectedMovie && (
           <div className="space-y-8 animate-fade-in text-left">
-            {/* Back Button and stats track bar */}
+            {/* Back Button */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <button
                 onClick={() => setView("home")}
@@ -372,28 +377,6 @@ export default function App() {
                 <p className="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-2xl select-none">
                   {selectedMovie.description}
                 </p>
-
-                {/* Affiliate redirect details */}
-                <div className="bg-slate-950/75 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-mono text-amber-500 uppercase tracking-widest font-extrabold block">
-                      Liên kết Shopee tương thích:
-                    </span>
-                    <p className="text-xs text-slate-400 font-semibold truncate max-w-xs sm:max-w-md font-mono">
-                      {selectedMovie.shopeeLink}
-                    </p>
-                  </div>
-                  <a
-                    href={selectedMovie.shopeeLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-colors shrink-0"
-                    id="shopee-external-fallback"
-                  >
-                    <span>Mua Đồ Dragon Ball</span>
-                    <ShoppingBag className="w-3.5 h-3.5" />
-                  </a>
-                </div>
               </div>
             </section>
 
@@ -412,7 +395,7 @@ export default function App() {
               </div>
 
               {/* Grid block with animation for beautiful representation */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
                 {Array.from({ length: selectedMovie.epCount }, (_, i) => {
                   const epNum = i + 1;
                   const epNumStr = String(epNum).padStart(2, "0");

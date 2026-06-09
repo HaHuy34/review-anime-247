@@ -54,22 +54,6 @@
   animation: float 20s infinite alternate -5s;
 }
 
-.bio {
-  color: var(--text-muted);
-  margin-top: 8px;
-  animation: bobble 2s ease-in-out infinite;
-}
-
-@keyframes bobble {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
 .timeline-action-icon {
   animation: flashIcon 1.2s infinite cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 1.4rem;
