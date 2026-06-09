@@ -17,6 +17,20 @@ import { AnimeSeries } from "./types";
 import VideoModal from "./components/VideoModal";
 
 export default function App() {
+  useEffect(() => {
+    fetch("/api/visit")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok) {
+          console.log("Theo dõi lượt truy cập thành công:", data);
+        } else {
+          console.warn("Máy chủ ghi nhận thất bại:", data.error);
+        }
+      })
+      .catch((err) => {
+        console.error("Không thể kết nối API theo dõi:", err);
+      });
+  }, []);
   // Theme system state
   const [theme, setTheme] = useState<"dark" | "light">(
     (localStorage.getItem("theme") as "dark" | "light") || "dark",
