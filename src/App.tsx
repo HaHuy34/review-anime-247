@@ -34,6 +34,7 @@ export default function App() {
   const [firebaseEpisodes, setFirebaseEpisodes] = useState<any[]>([]);
 
   useEffect(() => {
+    fetch("/api/visit").catch(() => {});
     // Load static data initially
     setMovies(initialAnimeData);
 
