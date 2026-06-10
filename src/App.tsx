@@ -18,6 +18,135 @@ import { initialAnimeData } from "@/src/data";
 import { AnimeSeries } from "@/src/types";
 import VideoModal from "@/src/components/VideoModal";
 
+function UnlockModal({
+  theme,
+  products,
+  onUnlock,
+  onClose,
+  handleProductClick,
+}: {
+  theme: "dark" | "light";
+  products: any[];
+  onUnlock: () => void;
+  onClose: () => void;
+  handleProductClick: (p: any) => void;
+}) {
+  const [skipTimer, setSkipTimer] = useState(30);
+  const [unlockTimer, setUnlockTimer] = useState<number | null>(null);
+
+  useEffect(() => {
+    let int: any;
+    if (unlockTimer === null) {
+      if (skipTimer > 0) {
+        int = setInterval(() => {
+          setSkipTimer((prev) => Math.max(0, prev - 1));
+        }, 1000);
+      }
+    } else {
+      int = setInterval(() => {
+        setUnlockTimer((prev) => {
+          if (prev !== null && prev <= 1) {
+            onUnlock();
+            return 0;
+          }
+          return prev !== null ? prev - 1 : null;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(int);
+  }, [unlockTimer, skipTimer, onUnlock]);
+
+  const onProductClick = (p: any) => {
+    handleProductClick(p);
+    setUnlockTimer(5);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div
+        className={`relative w-full max-w-lg rounded-3xl p-6 shadow-2xl border flex flex-col items-center text-center ${theme === "dark" ? "bg-[#13131c] border-white/10 text-white" : "bg-white border-black/10 text-slate-800"}`}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 p-2 rounded-full cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-all z-10"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <h2 className="font-display text-xl sm:text-2xl font-black mb-2 text-amber-500">
+          MỞ KHÓA TOÀN BỘ TẬP MỚI NHẤT!
+        </h2>
+        <p className="text-sm opacity-80 mb-6">
+          Xem 1 sản phẩm để mở khóa toàn bộ video hôm nay.
+        </p>
+
+        {unlockTimer !== null ? (
+          <div className="py-8 flex flex-col items-center justify-center min-h-[160px]">
+            <p className="text-5xl font-display font-black text-amber-500 animate-pulse">
+              {unlockTimer}s
+            </p>
+            <p className="text-sm mt-3 opacity-80 font-medium">
+              Đang xác nhận ủng hộ...
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3 mb-6 w-full">
+              {products.slice(0, 4).map((product) => (
+                <a
+                  key={product.id}
+                  href={product.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => onProductClick(product)}
+                  className={`group relative flex flex-col overflow-hidden rounded-xl border transition-all hover:border-amber-500 cursor-pointer
+                    ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-slate-50 border-slate-200"}`}
+                >
+                  <div className="aspect-[4/3] w-full overflow-hidden bg-slate-800">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="p-2.5 text-left">
+                    <p className="text-xs font-semibold line-clamp-1">
+                      {product.name}
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold text-[#ee4d2d] bg-[#ee4d2d]/10 px-1.5 py-0.5 rounded-full mt-1.5 w-fit">
+                      <ExternalLink className="w-2.5 h-2.5" /> Xem trên Shopee
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+
+            <div
+              className={`border-t w-full pt-4 ${theme === "dark" ? "border-white/10" : "border-black/5"}`}
+            >
+              {skipTimer > 0 ? (
+                <p className="text-xs opacity-60 font-medium">
+                  Hoặc đợi{" "}
+                  <span className="text-amber-500 font-bold">{skipTimer}s</span>{" "}
+                  để bỏ qua quảng cáo.
+                </p>
+              ) : (
+                <button
+                  onClick={onUnlock}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer
+                    ${theme === "dark" ? "bg-white/10 hover:bg-white/20 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-800"}`}
+                >
+                  Bỏ qua &amp; Xem ngay
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [view, setView] = useState<"home" | "episodes">("home");
@@ -26,8 +155,13 @@ export default function App() {
   const [selectedMovie, setSelectedMovie] = useState<AnimeSeries | null>(null);
   const [showScrollBtn, setShowScrollBtn] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(true);
   const [selectedEpisodeIndex, setSelectedEpisodeIndex] = useState<number>(0);
+  const [unlockTargetEpIndex, setUnlockTargetEpIndex] = useState<number | null>(
+    null,
+  );
   const dragonBallRef = useRef<HTMLDivElement | null>(null);
+  const [randomHomeProducts, setRandomHomeProducts] = useState<any[]>([]);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "info" | "error";
@@ -119,8 +253,15 @@ export default function App() {
       getProducts()
         .then((data) => {
           setProducts(data);
+          // Trộn ngẫu nhiên danh sách và lấy đúng 2 cái
+          const shuffled = [...data].sort(() => 0.5 - Math.random());
+          setRandomHomeProducts(shuffled.slice(0, 2));
+          setIsLoadingProducts(false);
         })
-        .catch((err) => console.error("Error fetching products", err));
+        .catch((err) => {
+          console.error("Error fetching products", err);
+          setIsLoadingProducts(false);
+        });
     });
   }, []);
 
@@ -163,6 +304,12 @@ export default function App() {
     }, 4500);
   };
 
+  const checkUnlock = () => {
+    const unlockedDate = localStorage.getItem("unlocked_shopee_date");
+    if (unlockedDate === new Date().toDateString()) return true;
+    return false;
+  };
+
   const handleTimelineClick = (series: AnimeSeries) => {
     setSelectedMovie(series);
     setView("episodes");
@@ -186,6 +333,14 @@ export default function App() {
       const finalIndex = validEpisodes.findIndex(
         (e: any) => e.name === videoDataList[foundEpIndex].name,
       );
+
+      const latestAvailable = getLatestEpisodeNum(selectedMovie);
+      const isLatest = latestAvailable > 0 && epNum === latestAvailable;
+
+      if (isLatest && !checkUnlock()) {
+        setUnlockTargetEpIndex(finalIndex);
+        return;
+      }
 
       setIsModalOpen(true);
       setSelectedEpisodeIndex(finalIndex);
@@ -221,6 +376,16 @@ export default function App() {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleUnlockSuccess = () => {
+    localStorage.setItem("unlocked_shopee_date", new Date().toDateString());
+    if (unlockTargetEpIndex !== null) {
+      setIsModalOpen(true);
+      setSelectedEpisodeIndex(unlockTargetEpIndex);
+      triggerToast("🎬 Đã mở khóa tập mới thành công!", "success");
+    }
+    setUnlockTargetEpIndex(null);
   };
 
   return (
@@ -323,7 +488,7 @@ export default function App() {
             </section>
 
             {/* Shopee Products Section */}
-            {products.length > 0 && (
+            {(isLoadingProducts || randomHomeProducts.length > 0) && (
               <section className="max-w-xl mx-auto">
                 <div
                   className={`p-6 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
@@ -333,49 +498,68 @@ export default function App() {
                   </h3>
 
                   <div className="grid grid-cols-2 gap-4">
-                    {products.map((product) => (
-                      <a
-                        key={product.id}
-                        href={product.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-xl
-                          ${theme === "dark" ? "bg-[#13131c] border-white/5 hover:border-amber-500/50" : "bg-white border-slate-200 hover:border-amber-500/50"}`}
-                      >
-                        <div
-                          className="aspect-square w-full overflow-hidden bg-slate-800 cursor-pointer"
-                          onClick={() => handleProductClick(product)}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
-                        </div>
-                        <div
-                          className="p-3"
-                          onClick={() => handleProductClick(product)}
-                        >
-                          <p
-                            className={`text-sm font-semibold line-clamp-2 mb-1 ${theme === "dark" ? "text-slate-200" : "text-slate-800"}`}
+                    {isLoadingProducts
+                      ? Array.from({ length: 2 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`flex flex-col overflow-hidden rounded-2xl border ${theme === "dark" ? "bg-[#13131c] border-white/5" : "bg-white border-slate-200"}`}
                           >
-                            {product.name}
-                          </p>
-                          {product.description && (
-                            <p
-                              className={`text-xs line-clamp-2 mb-2 ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
+                            <div
+                              className={`aspect-square w-full animate-pulse ${theme === "dark" ? "bg-slate-800" : "bg-slate-200"}`}
+                            />
+                            <div className="p-3 space-y-2">
+                              <div
+                                className={`h-4 w-3/4 rounded animate-pulse ${theme === "dark" ? "bg-slate-800" : "bg-slate-200"}`}
+                              />
+                              <div
+                                className={`h-3 w-1/2 rounded animate-pulse ${theme === "dark" ? "bg-slate-800" : "bg-slate-200"}`}
+                              />
+                            </div>
+                          </div>
+                        ))
+                      : randomHomeProducts.map((product) => (
+                          <a
+                            key={product.id}
+                            href={product.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-xl
+                          ${theme === "dark" ? "bg-[#13131c] border-white/5 hover:border-amber-500/50" : "bg-white border-slate-200 hover:border-amber-500/50"}`}
+                          >
+                            <div
+                              className="aspect-square w-full overflow-hidden bg-slate-800 cursor-pointer"
+                              onClick={() => handleProductClick(product)}
                             >
-                              {product.description}
-                            </p>
-                          )}
-                          <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold text-[#ee4d2d] bg-[#ee4d2d]/10 px-2 py-1 rounded-full group-hover:bg-[#ee4d2d] group-hover:text-white transition-colors mt-auto w-fit">
-                            <ExternalLink className="w-3 h-3" />
-                            Xem trên Shopee
-                          </span>
-                        </div>
-                      </a>
-                    ))}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              />
+                            </div>
+                            <div
+                              className="p-3"
+                              onClick={() => handleProductClick(product)}
+                            >
+                              <p
+                                className={`text-sm font-semibold line-clamp-2 mb-1 ${theme === "dark" ? "text-slate-200" : "text-slate-800"}`}
+                              >
+                                {product.name}
+                              </p>
+                              {product.description && (
+                                <p
+                                  className={`text-xs line-clamp-2 mb-2 ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
+                                >
+                                  {product.description}
+                                </p>
+                              )}
+                              <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold text-[#ee4d2d] bg-[#ee4d2d]/10 px-2 py-1 rounded-full group-hover:bg-[#ee4d2d] group-hover:text-white transition-colors mt-auto w-fit">
+                                <ExternalLink className="w-3 h-3" />
+                                Xem trên Shopee
+                              </span>
+                            </div>
+                          </a>
+                        ))}
                   </div>
                 </div>
               </section>
@@ -565,6 +749,83 @@ export default function App() {
                 })}
               </div>
             </section>
+            {products.length > 0 && (
+              <section className="w-full" style={{ marginTop: "3rem" }}>
+                <div
+                  className={`p-6 rounded-3xl shadow-xl text-left border w-full ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
+                >
+                  <h3 className="font-display text-xl text-[#ee4d2d] font-black pb-4 mb-4 border-b-2 border-dashed border-[#ee4d2d]/20 flex items-center gap-2">
+                    <span className="text-2xl">🛍️</span> MẪU ĐẸP AE THAM KHẢO
+                    NHÉ
+                  </h3>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    {isLoadingProducts
+                      ? Array.from({ length: 6 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`flex flex-col overflow-hidden rounded-2xl border ${theme === "dark" ? "bg-[#13131c] border-white/5" : "bg-white border-slate-200"}`}
+                          >
+                            <div
+                              className={`aspect-square w-full animate-pulse ${theme === "dark" ? "bg-slate-800" : "bg-slate-200"}`}
+                            />
+                            <div className="p-3 space-y-2">
+                              <div
+                                className={`h-4 w-3/4 rounded animate-pulse ${theme === "dark" ? "bg-slate-800" : "bg-slate-200"}`}
+                              />
+                              <div
+                                className={`h-3 w-1/2 rounded animate-pulse ${theme === "dark" ? "bg-slate-800" : "bg-slate-200"}`}
+                              />
+                            </div>
+                          </div>
+                        ))
+                      : products.map((product) => (
+                          <a
+                            key={product.id}
+                            href={product.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-xl
+                          ${theme === "dark" ? "bg-[#13131c] border-white/5 hover:border-amber-500/50" : "bg-white border-slate-200 hover:border-amber-500/50"}`}
+                          >
+                            <div
+                              className="aspect-square w-full overflow-hidden bg-slate-800 cursor-pointer"
+                              onClick={() => handleProductClick(product)}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              />
+                            </div>
+                            <div
+                              className="p-3"
+                              onClick={() => handleProductClick(product)}
+                            >
+                              <p
+                                className={`text-sm font-semibold line-clamp-2 mb-1 ${theme === "dark" ? "text-slate-200" : "text-slate-800"}`}
+                              >
+                                {product.name}
+                              </p>
+                              {product.description && (
+                                <p
+                                  className={`text-xs line-clamp-2 mb-2 ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
+                                >
+                                  {product.description}
+                                </p>
+                              )}
+                              <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold text-[#ee4d2d] bg-[#ee4d2d]/10 px-2 py-1 rounded-full group-hover:bg-[#ee4d2d] group-hover:text-white transition-colors mt-auto w-fit">
+                                <ExternalLink className="w-3 h-3" />
+                                Xem trên Shopee
+                              </span>
+                            </div>
+                          </a>
+                        ))}
+                  </div>
+                </div>
+              </section>
+            )}
           </div>
         )}
       </main>
@@ -585,6 +846,16 @@ export default function App() {
           initialEpisodeIndex={selectedEpisodeIndex}
           onClose={() => setIsModalOpen(false)}
           triggerNotification={triggerToast}
+        />
+      )}
+
+      {unlockTargetEpIndex !== null && (
+        <UnlockModal
+          theme={theme}
+          products={products}
+          onUnlock={handleUnlockSuccess}
+          onClose={() => setUnlockTargetEpIndex(null)}
+          handleProductClick={handleProductClick}
         />
       )}
 
