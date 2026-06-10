@@ -353,7 +353,10 @@ export default function App() {
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           />
                         </div>
-                        <div className="p-3">
+                        <div
+                          className="p-3"
+                          onClick={() => handleProductClick(product)}
+                        >
                           <p
                             className={`text-sm font-semibold line-clamp-2 mb-1 ${theme === "dark" ? "text-slate-200" : "text-slate-800"}`}
                           >
