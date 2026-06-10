@@ -386,7 +386,7 @@ export default function App() {
                 <div className="flex items-center gap-2">
                   <Tv className="w-5 h-5 text-amber-500" />
                   <h2 className="font-display text-xl font-bold uppercase tracking-wide">
-                    Danh Sách Tập Phim
+                    TẬP PHIM RA SỚM
                   </h2>
                 </div>
                 <span className="bg-slate-800/80 border border-slate-750 text-white font-mono text-xs px-3 py-1 rounded-full font-bold">
@@ -396,19 +396,13 @@ export default function App() {
 
               {/* Grid block with animation for beautiful representation */}
               <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
-                {Array.from({ length: selectedMovie.epCount }, (_, i) => {
-                  const epNum = i + 1;
+                {selectedMovie.episodes.map((episode, index) => {
+                  const epNum =
+                    parseInt(episode.name.replace(/\D/g, "")) || index + 1;
+
                   const epNumStr = String(epNum).padStart(2, "0");
 
-                  // Look up if this episode has an active url
-                  const epNamePadded = `Tập ${epNumStr}`;
-                  const epNameShort = `Tập ${epNum}`;
-
-                  const videoObj = selectedMovie.episodes.find(
-                    (v) => v.name === epNamePadded || v.name === epNameShort,
-                  );
-                  const isAvailable =
-                    videoObj && videoObj.src && videoObj.src.trim() !== "";
+                  const isAvailable = episode.src && episode.src.trim() !== "";
 
                   const latestAvailable = getLatestEpisodeNum(selectedMovie);
                   const isLatest =
@@ -418,20 +412,20 @@ export default function App() {
                     <button
                       key={epNum}
                       onClick={() => handleEpisodeClick(epNum)}
-                      className={`relative group/ep border rounded-2xl p-4 flex flex-col items-center justify-center transition-all min-h-[90px] cursor-pointer 
-                        ${
-                          isAvailable
-                            ? isLatest
-                              ? "bg-gradient-to-t from-amber-500/15 via-[#0e0f18] to-[#0e0f18] border-amber-500 hover:border-amber-400 hover:-translate-y-1 hover:shadow-lg"
-                              : "bg-[#0c0c14] border-white/5 hover:border-amber-500/50 hover:-translate-y-1 hover:shadow-lg"
-                            : "bg-white/[0.01] border-transparent opacity-40 cursor-default select-none"
-                        }
-                      `}
+                      className={`relative group/ep border rounded-2xl p-4 flex flex-col items-center justify-center transition-all min-h-[90px] cursor-pointer
+      ${
+        isAvailable
+          ? isLatest
+            ? "bg-gradient-to-t from-amber-500/15 via-[#0e0f18] to-[#0e0f18] border-amber-500 hover:border-amber-400 hover:-translate-y-1 hover:shadow-lg"
+            : "bg-[#0c0c14] border-white/5 hover:border-amber-500/50 hover:-translate-y-1 hover:shadow-lg"
+          : "bg-white/[0.01] border-transparent opacity-40 cursor-default select-none"
+      }`}
                       id={`ep-btn-${epNum}`}
                     >
                       <span className="text-[10px] text-slate-400 font-semibold absolute top-2 left-2 pb-1 block">
                         Tập
                       </span>
+
                       <span
                         className={`font-display text-3xl font-black pb-1 pt-2 block ${
                           isLatest
@@ -444,7 +438,6 @@ export default function App() {
                         {epNumStr}
                       </span>
 
-                      {/* Play hover button indicator */}
                       {isAvailable && (
                         <div className="absolute inset-0 flex items-center justify-center bg-amber-500 rounded-2xl opacity-0 group-hover/ep:opacity-100 transition-opacity flex-col">
                           <div className="w-8 h-8 rounded-full bg-slate-950 flex items-center justify-center shadow-md scale-90 group-hover/ep:scale-100 transition-transform">
@@ -453,7 +446,6 @@ export default function App() {
                         </div>
                       )}
 
-                      {/* Sparkle badge for NEW status */}
                       {isLatest && (
                         <span className="absolute top-2 right-2 bg-red-650 text-white font-extrabold text-[8px] uppercase px-1 rounded">
                           New
