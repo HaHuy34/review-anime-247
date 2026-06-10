@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sun,
   Moon,
@@ -27,12 +27,18 @@ export default function App() {
   const [showScrollBtn, setShowScrollBtn] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedEpisodeIndex, setSelectedEpisodeIndex] = useState<number>(0);
+  const dragonBallRef = useRef<HTMLDivElement | null>(null);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "info" | "error";
   } | null>(null);
   const [firebaseEpisodes, setFirebaseEpisodes] = useState<any[]>([]);
-
+  const scrollToDragonBall = () => {
+    dragonBallRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
   useEffect(() => {
     fetch("/api/visit").catch(() => {});
     // Load static data initially
@@ -203,6 +209,19 @@ export default function App() {
     const nums = valid.map((ep) => parseInt(ep.name.replace(/\D/g, "")) || 0);
     return Math.max(...nums);
   };
+  const handleProductClick = async (product: any) => {
+    try {
+      fetch("/api/product-click", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ product }),
+      }).catch(() => {});
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div
@@ -293,7 +312,10 @@ export default function App() {
                 <h1 className="font-display text-4xl font-extrabold tracking-tight">
                   Review Anime 24/7
                 </h1>
-                <p className="text-amber-500 font-semibold tracking-wide flex items-center justify-center gap-1.5 animate-bobble mt-[20px]">
+                <p
+                  onClick={scrollToDragonBall}
+                  className="text-amber-500 font-semibold tracking-wide flex items-center justify-center gap-1.5 animate-bobble mt-[20px]"
+                >
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <span>Kéo xuống dưới để xem phim 👇</span>
                 </p>
@@ -320,7 +342,10 @@ export default function App() {
                         className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-xl
                           ${theme === "dark" ? "bg-[#13131c] border-white/5 hover:border-amber-500/50" : "bg-white border-slate-200 hover:border-amber-500/50"}`}
                       >
-                        <div className="aspect-square w-full overflow-hidden bg-slate-800">
+                        <div
+                          className="aspect-square w-full overflow-hidden bg-slate-800 cursor-pointer"
+                          onClick={() => handleProductClick(product)}
+                        >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={product.image}
@@ -353,7 +378,7 @@ export default function App() {
               </section>
             )}
 
-            <section className="max-w-xl mx-auto">
+            <section ref={dragonBallRef} className="max-w-xl mx-auto">
               <div
                 className={`p-6 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
               >
