@@ -2,13 +2,15 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
+const env = (import.meta as any).env || {};
+
 const firebaseConfig = {
-  apiKey: "AIzaSyA1abBAV7KXxKRFy6TuBhaHF4zCES9khqs",
-  authDomain: "dragonball-shopee-affiliate.firebaseapp.com",
-  projectId: "dragonball-shopee-affiliate",
-  storageBucket: "dragonball-shopee-affiliate.firebasestorage.app",
-  messagingSenderId: "308236789476",
-  appId: "1:308236789476:web:638ae73f7ed7cac03e2ef1",
+  apiKey: env.VITE_FIREBASE_API_KEY,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
