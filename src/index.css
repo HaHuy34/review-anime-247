@@ -73,3 +73,35 @@
 .timeline-content:hover .timeline-action-icon {
   color: var(--primary);
 }
+
+.animate-bobble {
+  animation: bobble 2s ease-in-out infinite;
+}
+
+@keyframes bobble {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.timeline-action-icons {
+  font-size: 1.4rem;
+  animation: 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite flashIcon;
+}
+
+@keyframes flashIcon {
+  0%,
+  to {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}

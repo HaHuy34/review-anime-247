@@ -16,3 +16,11 @@ export interface AnimeSeries {
   shopeeLink: string;
   episodes: DbEpisode[];
 }
+
+export interface Episode {
+  id?: string;
+  animeId: string;
+  episode: number;
+  name: string;
+  src: string;
+}
