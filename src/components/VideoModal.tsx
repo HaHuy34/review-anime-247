@@ -1,14 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import {
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  Tv,
-  AlertCircle,
-  ExternalLink,
-} from "lucide-react";
+import { X, Sparkles, Tv, AlertCircle } from "lucide-react";
 import { AnimeSeries, DbEpisode } from "@/src/types";
 
 interface VideoModalProps {
@@ -21,18 +13,20 @@ interface VideoModalProps {
   ) => void;
 }
 
-// Thêm hàm getEmbedUrl
 const getEmbedUrl = (url: string, iframeId: string) => {
   if (!url) return "";
 
-  // ===== DAILYMOTION =====
+  // Dailymotion
   if (url.includes("dailymotion.com")) {
-    return `${url}${url.includes("?") ? "&" : "?"}api=1&id=${iframeId}&autoplay=1`;
+    return `${url}${
+      url.includes("?") ? "&" : "?"
+    }api=1&id=${iframeId}&autoplay=1`;
   }
 
-  // ===== GOOGLE DRIVE =====
+  // Google Drive
   if (url.includes("drive.google.com")) {
     const match = url.match(/\/d\/([^/]+)/);
+
     if (match?.[1]) {
       return `https://drive.google.com/file/d/${match[1]}/preview`;
     }
@@ -53,8 +47,7 @@ export default function VideoModal({
   );
 
   const [currentIndex, setCurrentIndex] = useState<number>(initialEpisodeIndex);
-
-  const [showNav, setShowNav] = useState<boolean>(true);
+  // const [showNav, setShowNav] = useState<boolean>(true);
   const [showSuggestion, setShowSuggestion] = useState<boolean>(false);
   const [dismissedSuggestion, setDismissedSuggestion] = useState<{
     [key: string]: boolean;
@@ -63,32 +56,31 @@ export default function VideoModal({
     [key: string]: boolean;
   }>({});
 
-  const navTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // const navTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const durationsRef = useRef<{ [key: string]: number }>({});
 
-  const resetNavVisibilityTimer = () => {
-    setShowNav(true);
-    if (navTimeoutRef.current) {
-      clearTimeout(navTimeoutRef.current);
-    }
-    navTimeoutRef.current = setTimeout(() => {
-      setShowNav(false);
-    }, 3000);
-  };
+  // const resetNavVisibilityTimer = () => {
+  //   setShowNav(true);
+  //   if (navTimeoutRef.current) {
+  //     clearTimeout(navTimeoutRef.current);
+  //   }
+  //   navTimeoutRef.current = setTimeout(() => {
+  //     setShowNav(false);
+  //   }, 3000);
+  // };
 
-  useEffect(() => {
-    resetNavVisibilityTimer();
-    return () => {
-      if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
-    };
-  }, [currentIndex]);
+  // useEffect(() => {
+  //   resetNavVisibilityTimer();
+  //   return () => {
+  //     if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+  //   };
+  // }, [currentIndex]);
 
   const currentEpisodeDetails = validEpisodes[currentIndex];
 
   useEffect(() => {
     const handleDailymotionMessages = (event: MessageEvent) => {
-      const isDailymotion = event.origin.includes("dailymotion.com");
-      if (!isDailymotion) return;
+      if (!event.origin.includes("dailymotion.com")) return;
 
       try {
         const data =
@@ -190,12 +182,12 @@ export default function VideoModal({
 
       <div
         className="relative w-full max-w-4xl bg-slate-950 border border-slate-800/80 rounded-2xl overflow-hidden shadow-2xl z-10 transition-transform duration-300 scale-100 flex flex-col"
-        onMouseMove={resetNavVisibilityTimer}
-        onClick={resetNavVisibilityTimer}
-        onTouchStart={resetNavVisibilityTimer}
+        // onMouseMove={resetNavVisibilityTimer}
+        // onClick={resetNavVisibilityTimer}
+        // onTouchStart={resetNavVisibilityTimer}
       >
-        <div className="p-4 bg-slate-900/60 border-b border-slate-850 flex flex-col sm:flex-row gap-3 sm:gap-0 sm:items-center justify-between text-left">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="p-4 bg-slate-900/60 border-b border-slate-850 flex items-center justify-between text-left">
+          <div className="flex items-center gap-2">
             <div className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg border border-amber-500/25">
               <Tv className="w-4 h-4" />
             </div>
@@ -203,38 +195,24 @@ export default function VideoModal({
               <span className="text-[10px] font-mono text-amber-500 uppercase tracking-widest font-extrabold flex items-center gap-1">
                 <Sparkles className="w-3 h-3 animate-pulse" /> Đang phát Anime
               </span>
-              <h3 className="text-white font-bold text-sm sm:text-base tracking-tight truncate">
+              <h3 className="text-white font-bold text-sm sm:text-base tracking-tight truncate max-w-md sm:max-w-xl">
                 {series.vietnameseTitle || series.title} •{" "}
                 {currentEpisodeDetails.name}
               </h3>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {currentEpisodeDetails?.src && (
-              <a
-                href={currentEpisodeDetails.src}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-slate-950 rounded-lg text-xs font-black border border-amber-500/25 hover:border-transparent transition-all cursor-pointer shadow-sm hover:scale-[1.03]"
-                title="Mở video trong tab mới để xem full HD"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Xem HD / Tab Mới</span>
-              </a>
-            )}
-            <button
-              onClick={onClose}
-              className="hidden sm:flex p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
-              title="Đóng trình phát"
-              id="close-modal-btn"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+            title="Đóng trình phát"
+            id="close-modal-btn"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        <div className="relative w-full aspect-video min-h-[560px] sm:min-h-[520px] md:min-h-[680px] bg-black overflow-hidden shrink-0">
+        <div className="relative w-full aspect-video min-h-[340px] sm:min-h-[420px] bg-black overflow-hidden">
           <div
             className="flex w-full h-full transition-transform duration-500 ease-out"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -256,11 +234,25 @@ export default function VideoModal({
                     <iframe
                       id={iframeId}
                       src={srcUrl}
-                      className={`absolute left-0 w-full border-0 bg-black transition-all duration-300 ${
-                        isCurrent && ep.src?.includes("drive.google.com")
-                          ? "-top-[100px] h-[calc(100%+105px)]"
-                          : "top-0 h-full"
-                      }`}
+                      className={`
+    border-0 bg-black
+    absolute inset-0
+
+    ${
+      ep.src?.includes("drive.google.com")
+        ? `
+          w-full
+          h-full
+
+          sm:-top-[70px]
+          sm:h-[calc(100%+125px)]
+        `
+        : `
+          w-full
+          h-full
+        `
+    }
+  `}
                       allow="autoplay; fullscreen; picture-in-picture"
                       allowFullScreen
                       title={`${series.title} - ${ep.name}`}
@@ -275,7 +267,7 @@ export default function VideoModal({
             })}
           </div>
 
-          {showNav && (
+          {/* {showNav && (
             <>
               {currentIndex > 0 && (
                 <button
@@ -297,7 +289,7 @@ export default function VideoModal({
                 </button>
               )}
             </>
-          )}
+          )} */}
 
           {showSuggestion && (
             <div className="absolute bottom-6 right-6 p-4 sm:p-5 bg-slate-950/95 border border-slate-800 rounded-xl max-w-xs text-left shadow-2xl z-30 animate-pulse">
@@ -328,25 +320,17 @@ export default function VideoModal({
           )}
         </div>
 
-        <div
-          className="p-3 bg-slate-900/30 border-t border-slate-905 
-  grid grid-cols-1 sm:grid-cols-3 gap-2 items-center text-xs text-slate-400 font-mono"
-        >
-          <span className="sm:text-left">
+        <div className="p-3 bg-slate-900/30 border-t border-slate-905 flex items-center justify-between text-xs text-slate-400 font-mono">
+          <span>
             Tổng số tập có video:{" "}
             <strong className="text-white">{validEpisodes.length} Tập</strong>
           </span>
-
-          <span className="sm:text-center">
+          <span>
             Tập đang xem:{" "}
             <strong className="text-amber-500">
               {currentIndex + 1} / {validEpisodes.length}
             </strong>
           </span>
-
-          <p className="text-[11px] text-amber-400/95 font-sans sm:text-right leading-snug">
-            ✨ Gợi ý: Nếu G-Drive không tải được, hãy nhấn "Xem HD / Tab Mới"
-          </p>
         </div>
       </div>
     </div>
