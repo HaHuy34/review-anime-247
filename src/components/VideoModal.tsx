@@ -20,6 +20,26 @@ interface VideoModalProps {
   ) => void;
 }
 
+// Thêm hàm getEmbedUrl
+const getEmbedUrl = (url: string, iframeId: string) => {
+  if (!url) return "";
+
+  // ===== DAILYMOTION =====
+  if (url.includes("dailymotion.com")) {
+    return `${url}${url.includes("?") ? "&" : "?"}api=1&id=${iframeId}&autoplay=1`;
+  }
+
+  // ===== GOOGLE DRIVE =====
+  if (url.includes("drive.google.com")) {
+    const match = url.match(/\/d\/([^/]+)/);
+    if (match?.[1]) {
+      return `https://drive.google.com/file/d/${match[1]}/preview`;
+    }
+  }
+
+  return url;
+};
+
 export default function VideoModal({
   series,
   initialEpisodeIndex,
@@ -65,7 +85,8 @@ export default function VideoModal({
 
   useEffect(() => {
     const handleDailymotionMessages = (event: MessageEvent) => {
-      if (!event.origin.includes("dailymotion.com")) return;
+      const isDailymotion = event.origin.includes("dailymotion.com");
+      if (!isDailymotion) return;
 
       try {
         const data =
@@ -207,7 +228,7 @@ export default function VideoModal({
               const isCurrent = index === currentIndex;
 
               const srcUrl = isCurrent
-                ? `${ep.src}${ep.src.includes("?") ? "&" : "?"}api=1&id=${iframeId}&autoplay=1`
+                ? getEmbedUrl(ep.src, iframeId)
                 : "about:blank";
 
               return (
