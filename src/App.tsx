@@ -313,6 +313,20 @@ export default function App() {
   };
 
   const handleTimelineClick = (series: AnimeSeries) => {
+    const isUnlocked = checkUnlock();
+
+    const premiumEpisodes = getPremiumEpisodes(series);
+    const hasPremium = premiumEpisodes.length > 0;
+
+    // Nếu có premium và chưa unlock → bật modal Shopee
+    if (hasPremium && !isUnlocked) {
+      setSelectedMovie(series);
+      setUnlockTargetEpIndex(null); // không cần ep cụ thể
+      setUnlockTargetEpIndex(-999); // đánh dấu mở full series
+      return;
+    }
+
+    // đã unlock → vào thẳng episodes
     setSelectedMovie(series);
     setView("episodes");
   };
@@ -351,11 +365,22 @@ export default function App() {
 
   const handleUnlockSuccess = () => {
     localStorage.setItem("unlocked_shopee_date", new Date().toDateString());
+
+    triggerToast("🎉 Đã mở khóa toàn bộ nội dung!", "success");
+
+    // Nếu là mở từ timeline (series)
+    if (unlockTargetEpIndex === -999 && selectedMovie) {
+      setView("episodes");
+      setUnlockTargetEpIndex(null);
+      return;
+    }
+
+    // Nếu là mở từ episode cũ
     if (unlockTargetEpIndex !== null) {
       setIsModalOpen(true);
       setSelectedEpisodeIndex(unlockTargetEpIndex);
-      triggerToast("🎬 Đã mở khóa tập mới thành công!", "success");
     }
+
     setUnlockTargetEpIndex(null);
   };
   // console.log({selectedMovie.epCount});
