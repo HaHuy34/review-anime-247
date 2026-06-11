@@ -12,6 +12,8 @@ import {
   ChevronUp,
   Sparkles,
   ExternalLink,
+  Lock,
+  LockOpen,
 } from "lucide-react";
 
 import { initialAnimeData } from "@/src/data";
@@ -315,47 +317,6 @@ export default function App() {
     setView("episodes");
   };
 
-  const handleEpisodeClick = (epNum: number) => {
-    if (!selectedMovie) return;
-
-    const epNamePadded = `Tập ${String(epNum).padStart(2, "0")}`;
-    const epNameShort = `Tập ${epNum}`;
-
-    const videoDataList = selectedMovie.episodes;
-    const foundEpIndex = videoDataList.findIndex(
-      (v: any) => v.name === epNamePadded || v.name === epNameShort,
-    );
-
-    if (foundEpIndex !== -1 && videoDataList[foundEpIndex].src) {
-      const validEpisodes = videoDataList.filter(
-        (ep: any) => ep.src && ep.src.trim() !== "",
-      );
-      const finalIndex = validEpisodes.findIndex(
-        (e: any) => e.name === videoDataList[foundEpIndex].name,
-      );
-
-      const latestAvailable = getLatestEpisodeNum(selectedMovie);
-      const isLatest = latestAvailable > 0 && epNum === latestAvailable;
-
-      if (isLatest && !checkUnlock()) {
-        setUnlockTargetEpIndex(finalIndex);
-        return;
-      }
-
-      setIsModalOpen(true);
-      setSelectedEpisodeIndex(finalIndex);
-      triggerToast(
-        `🎬 Đang phát: ${selectedMovie.title} - ${videoDataList[foundEpIndex].name}`,
-        "success",
-      );
-    } else {
-      alert(
-        `Tập ${String(epNum).padStart(2, "0")} hiện tại admin chưa tải lên video lên hệ thống. ` +
-          `Scroll để xem các tập bên dưới ↓ ĐÃ RA MẮT`,
-      );
-    }
-  };
-
   const getLatestEpisodeNum = (series: AnimeSeries) => {
     const valid = series.episodes.filter(
       (ep: any) => ep.src && ep.src.trim() !== "",
@@ -364,6 +325,16 @@ export default function App() {
     const nums = valid.map((ep) => parseInt(ep.name.replace(/\D/g, "")) || 0);
     return Math.max(...nums);
   };
+
+  const getPremiumEpisodes = (series: AnimeSeries) => {
+    const availableEpisodes = series.episodes
+      .filter((ep: any) => ep.src && ep.src.trim() !== "")
+      .map((ep: any) => parseInt(ep.name.replace(/\D/g, "")) || 0)
+      .sort((a, b) => b - a);
+
+    return availableEpisodes.slice(0, 2);
+  };
+
   const handleProductClick = async (product: any) => {
     try {
       fetch("/api/product-click", {
@@ -387,7 +358,47 @@ export default function App() {
     }
     setUnlockTargetEpIndex(null);
   };
+  // console.log({selectedMovie.epCount});
+  const handleEpisodeClick = (epNum: number) => {
+    if (!selectedMovie) return;
 
+    const epNamePadded = `Tập ${String(epNum).padStart(2, "0")}`;
+    const epNameShort = `Tập ${epNum}`;
+
+    const videoDataList = selectedMovie.episodes;
+    const foundEpIndex = videoDataList.findIndex(
+      (v: any) => v.name === epNamePadded || v.name === epNameShort,
+    );
+
+    if (foundEpIndex !== -1 && videoDataList[foundEpIndex].src) {
+      const validEpisodes = videoDataList.filter(
+        (ep: any) => ep.src && ep.src.trim() !== "",
+      );
+      const finalIndex = validEpisodes.findIndex(
+        (e: any) => e.name === videoDataList[foundEpIndex].name,
+      );
+
+      const premiumEpisodes = getPremiumEpisodes(selectedMovie);
+      const isPremium = premiumEpisodes.includes(epNum);
+
+      if (isPremium && !checkUnlock()) {
+        setUnlockTargetEpIndex(finalIndex);
+        return;
+      }
+
+      setIsModalOpen(true);
+      setSelectedEpisodeIndex(finalIndex);
+      triggerToast(
+        `🎬 Đang phát: ${selectedMovie.title} - ${videoDataList[foundEpIndex].name}`,
+        "success",
+      );
+    } else {
+      alert(
+        `Tập ${String(epNum).padStart(2, "0")} hiện tại admin chưa tải lên video lên hệ thống. ` +
+          `Scroll để xem các tập bên dưới ↓ ĐÃ RA MẮT`,
+      );
+    }
+  };
   return (
     <div
       className={`min-h-screen transition-colors duration-300 ${theme === "dark" ? "bg-[#050508] text-white" : "bg-[#f8fafc] text-[#0f172a]"}`}
@@ -698,22 +709,22 @@ export default function App() {
                     parseInt(episode.name.replace(/\D/g, "")) || index + 1;
                   const epNumStr = String(epNum).padStart(2, "0");
                   const isAvailable = episode.src && episode.src.trim() !== "";
-                  const latestAvailable = getLatestEpisodeNum(selectedMovie);
-                  const isLatest =
-                    latestAvailable > 0 && epNum === latestAvailable;
-
+                  const premiumEpisodes = getPremiumEpisodes(selectedMovie);
+                  const isPremium = premiumEpisodes.includes(epNum);
+                  const isUnlocked = checkUnlock();
+                  const isLocked = isPremium && !isUnlocked;
                   return (
                     <button
                       key={epNum}
                       onClick={() => handleEpisodeClick(epNum)}
-                      className={`relative group border rounded-2xl p-4 flex flex-col items-center justify-center transition-all min-h-[90px] cursor-pointer
-                        ${
-                          isAvailable
-                            ? isLatest
-                              ? "bg-gradient-to-t from-amber-500/15 via-[#0e0f18] to-[#0e0f18] border-amber-500 hover:border-amber-400 hover:-translate-y-1 hover:shadow-lg"
-                              : "bg-[#0c0c14] border-white/5 hover:border-amber-500/50 hover:-translate-y-1 hover:shadow-lg text-white"
-                            : "bg-white/[0.01] border-transparent opacity-40 cursor-default select-none text-slate-500"
-                        }`}
+                      className={`relative group border rounded-2xl p-4 flex flex-col items-center justify-center transition-all min-h-[90px]
+${
+  !isAvailable
+    ? "bg-white/[0.01] border-transparent opacity-40 cursor-not-allowed select-none text-slate-500"
+    : isPremium
+      ? "bg-gradient-to-br from-amber-900/40 via-yellow-800/20 to-amber-900/40 border-amber-500 text-amber-200 hover:border-amber-400 hover:-translate-y-1"
+      : "bg-[#0c0c14] border-white/5 hover:border-amber-500/50 hover:-translate-y-1 hover:shadow-lg text-white cursor-pointer"
+}`}
                     >
                       <span className="text-[10px] font-semibold absolute top-2 left-2 pb-1 block text-slate-400">
                         Tập
@@ -721,11 +732,13 @@ export default function App() {
 
                       <span
                         className={`font-display text-3xl font-black pb-1 pt-2 block ${
-                          isLatest
-                            ? "text-amber-400"
-                            : isAvailable
-                              ? "text-white"
-                              : "text-inherit"
+                          isLocked
+                            ? "text-amber-300"
+                            : isPremium
+                              ? "text-emerald-400"
+                              : isAvailable
+                                ? "text-white"
+                                : "text-inherit"
                         }`}
                       >
                         {epNumStr}
@@ -739,9 +752,19 @@ export default function App() {
                         </div>
                       )}
 
-                      {isLatest && (
-                        <span className="absolute top-2 right-2 bg-red-650 text-white font-extrabold text-[8px] uppercase px-1 rounded">
-                          New
+                      {isPremium && (
+                        <span
+                          className={`absolute top-2 right-2 p-1 rounded-full shadow ${
+                            isLocked
+                              ? "bg-amber-500 text-black"
+                              : "bg-emerald-500 text-white"
+                          }`}
+                        >
+                          {isLocked ? (
+                            <Lock className="w-3.5 h-3.5" />
+                          ) : (
+                            <LockOpen className="w-3.5 h-3.5" />
+                          )}
                         </span>
                       )}
                     </button>
