@@ -53,6 +53,7 @@ export default function VideoModal({
   );
 
   const [currentIndex, setCurrentIndex] = useState<number>(initialEpisodeIndex);
+
   const [showNav, setShowNav] = useState<boolean>(true);
   const [showSuggestion, setShowSuggestion] = useState<boolean>(false);
   const [dismissedSuggestion, setDismissedSuggestion] = useState<{
@@ -193,8 +194,8 @@ export default function VideoModal({
         onClick={resetNavVisibilityTimer}
         onTouchStart={resetNavVisibilityTimer}
       >
-        <div className="p-4 bg-slate-900/60 border-b border-slate-850 flex items-center justify-between text-left">
-          <div className="flex items-center gap-2">
+        <div className="p-4 bg-slate-900/60 border-b border-slate-850 flex flex-col sm:flex-row gap-3 sm:gap-0 sm:items-center justify-between text-left">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg border border-amber-500/25">
               <Tv className="w-4 h-4" />
             </div>
@@ -202,7 +203,7 @@ export default function VideoModal({
               <span className="text-[10px] font-mono text-amber-500 uppercase tracking-widest font-extrabold flex items-center gap-1">
                 <Sparkles className="w-3 h-3 animate-pulse" /> Đang phát Anime
               </span>
-              <h3 className="text-white font-bold text-sm sm:text-base tracking-tight truncate max-w-md sm:max-w-xl">
+              <h3 className="text-white font-bold text-sm sm:text-base tracking-tight truncate">
                 {series.vietnameseTitle || series.title} •{" "}
                 {currentEpisodeDetails.name}
               </h3>
@@ -224,7 +225,7 @@ export default function VideoModal({
             )}
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="hidden sm:flex p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
               title="Đóng trình phát"
               id="close-modal-btn"
             >
@@ -233,7 +234,7 @@ export default function VideoModal({
           </div>
         </div>
 
-        <div className="relative w-full aspect-video min-h-[260px] sm:min-h-[400px] md:min-h-[480px] bg-black overflow-hidden shrink-0">
+        <div className="relative w-full aspect-video min-h-[560px] sm:min-h-[520px] md:min-h-[680px] bg-black overflow-hidden shrink-0">
           <div
             className="flex w-full h-full transition-transform duration-500 ease-out"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -257,7 +258,7 @@ export default function VideoModal({
                       src={srcUrl}
                       className={`absolute left-0 w-full border-0 bg-black transition-all duration-300 ${
                         isCurrent && ep.src?.includes("drive.google.com")
-                          ? "-top-[56px] h-[calc(100%+56px)]"
+                          ? "-top-[100px] h-[calc(100%+105px)]"
                           : "top-0 h-full"
                       }`}
                       allow="autoplay; fullscreen; picture-in-picture"
