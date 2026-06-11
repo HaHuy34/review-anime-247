@@ -26,7 +26,7 @@ export const initialAnimeData: AnimeSeries[] = [
     id: "Dragon Ball Z (1989)",
     title: "Dragon Ball Z (1989)",
     vietnameseTitle: "Bảy Viên Ngọc Rồng Z",
-    subtitle: "Kỷ nguyên DBZ (167 tập)",
+    subtitle: "Kỷ nguyên DBZ (Tập 99 -> Tập 167)",
     epCount: 167,
     orderNum: 2,
     icon: "⚡",

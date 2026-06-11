@@ -7,6 +7,7 @@ import {
   Sparkles,
   Tv,
   AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 import { AnimeSeries, DbEpisode } from "@/src/types";
 
@@ -208,17 +209,31 @@ export default function VideoModal({
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
-            title="Đóng trình phát"
-            id="close-modal-btn"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {currentEpisodeDetails?.src && (
+              <a
+                href={currentEpisodeDetails.src}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-slate-950 rounded-lg text-xs font-black border border-amber-500/25 hover:border-transparent transition-all cursor-pointer shadow-sm hover:scale-[1.03]"
+                title="Mở video trong tab mới để xem full HD"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Xem HD / Tab Mới</span>
+              </a>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+              title="Đóng trình phát"
+              id="close-modal-btn"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
+        <div className="relative w-full aspect-video min-h-[260px] sm:min-h-[400px] md:min-h-[480px] bg-black overflow-hidden shrink-0">
           <div
             className="flex w-full h-full transition-transform duration-500 ease-out"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -240,7 +255,11 @@ export default function VideoModal({
                     <iframe
                       id={iframeId}
                       src={srcUrl}
-                      className="w-full h-full border-0 bg-black"
+                      className={`absolute left-0 w-full border-0 bg-black transition-all duration-300 ${
+                        isCurrent && ep.src?.includes("drive.google.com")
+                          ? "-top-[56px] h-[calc(100%+56px)]"
+                          : "top-0 h-full"
+                      }`}
                       allow="autoplay; fullscreen; picture-in-picture"
                       allowFullScreen
                       title={`${series.title} - ${ep.name}`}
@@ -308,17 +327,25 @@ export default function VideoModal({
           )}
         </div>
 
-        <div className="p-3 bg-slate-900/30 border-t border-slate-905 flex items-center justify-between text-xs text-slate-400 font-mono">
-          <span>
+        <div
+          className="p-3 bg-slate-900/30 border-t border-slate-905 
+  grid grid-cols-1 sm:grid-cols-3 gap-2 items-center text-xs text-slate-400 font-mono"
+        >
+          <span className="sm:text-left">
             Tổng số tập có video:{" "}
             <strong className="text-white">{validEpisodes.length} Tập</strong>
           </span>
-          <span>
+
+          <span className="sm:text-center">
             Tập đang xem:{" "}
             <strong className="text-amber-500">
               {currentIndex + 1} / {validEpisodes.length}
             </strong>
           </span>
+
+          <p className="text-[11px] text-amber-400/95 font-sans sm:text-right leading-snug">
+            ✨ Gợi ý: Nếu G-Drive không tải được, hãy nhấn "Xem HD / Tab Mới"
+          </p>
         </div>
       </div>
     </div>
