@@ -630,7 +630,7 @@ export default function App() {
 
                           <div
                             onClick={() => handleTimelineClick(item)}
-                            className={`relative overflow-hidden flex-1 p-4 rounded-2xl border transition-all duration-300 flex items-center justify-between cursor-pointer
+                            className={`relative overflow-hidden flex-1 p-[10px]  rounded-2xl border transition-all duration-300 flex items-center justify-between cursor-pointer
                               ${
                                 theme === "dark"
                                   ? "bg-[#0b0b12]/90 hover:bg-[#0c0c16]/30 border-white/5 hover:border-amber-500/60 hover:translate-x-1.5 hover:shadow-2xl flex-row"
@@ -638,20 +638,29 @@ export default function App() {
                               }
                             `}
                           >
-                            <div className="relative z-10 space-y-1 text-left">
-                              <h4 className="font-bold text-sm sm:text-base flex items-center flex-wrap gap-1.5">
-                                <span>{item.title}</span>
-                                {hasNewBadge && (
-                                  <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold uppercase animate-pulse tracking-wider">
-                                    NEW
-                                  </span>
-                                )}
-                              </h4>
-                              <p className="text-xs text-slate-400 font-medium">
-                                {item.subtitle}
-                              </p>
+                            <div className="relative z-10 flex items-center gap-3 text-left">
+                              {item.image && (
+                                <img
+                                  src={item.image}
+                                  alt={item.title}
+                                  className="w-12 h-12 rounded-lg object-cover sm:w-16 sm:h-16 shrink-0 border border-white/10"
+                                />
+                              )}
+                              <div className="relative z-10 space-y-1 text-left">
+                                <h4 className="font-bold text-sm sm:text-base flex items-center flex-wrap gap-1.5">
+                                  <span>{item.title}</span>
+                                  {hasNewBadge && (
+                                    <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold uppercase animate-pulse tracking-wider">
+                                      NEW
+                                    </span>
+                                  )}
+                                </h4>
+                                <p className="text-xs text-slate-400 font-medium">
+                                  {item.subtitle}
+                                </p>
+                              </div>
                             </div>
-                            <span className="timeline-action-icons relative z-10 text-lg opacity-65 group-hover:scale-125 group-hover:opacity-100 transition-all duration-300">
+                            <span className="timeline-action-icons hidden sm:block relative z-10 text-lg opacity-65 group-hover:scale-125 group-hover:opacity-100 transition-all duration-300">
                               🎬
                             </span>
                           </div>

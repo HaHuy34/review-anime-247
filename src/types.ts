@@ -15,6 +15,7 @@ export interface AnimeSeries {
   description: string;
   shopeeLink: string;
   episodes: DbEpisode[];
+  image?: string;
 }
 
 export interface Episode {

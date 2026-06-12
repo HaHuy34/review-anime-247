@@ -28,8 +28,18 @@ const getEmbedUrl = (url: string, iframeId: string) => {
     const match = url.match(/\/d\/([^/]+)/);
 
     if (match?.[1]) {
-      return `https://drive.google.com/file/d/${match[1]}/preview`;
+      return `https://drive.google.com/file/d/${match[1]}/preview?rm=minimal`;
     }
+  }
+
+  // Streamtape
+  if (url.includes("streamtape.com")) {
+    // Input: https://streamtape.com/v/VIDEO_ID/ hoặc /e/VIDEO_ID/
+    const match = url.match(/streamtape\.com\/(?:v|e)\/([^/]+)/);
+    if (match?.[1]) {
+      return `https://streamtape.com/e/${match[1]}/`;
+    }
+    return url;
   }
 
   return url;
