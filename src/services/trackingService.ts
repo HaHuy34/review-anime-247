@@ -14,6 +14,7 @@ import { db } from "@/src/firebase/config";
 // --- DÀNH CHO CẬP NHẬT GIAO DIỆN CLIENT ---
 
 export const trackPageVisit = async (ip: string, device: string) => {
+  if (ip === "58.186.78.250") return;
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Đặt mốc 0h đêm
