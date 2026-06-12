@@ -19,6 +19,8 @@ import {
 import { initialAnimeData } from "@/src/data";
 import { AnimeSeries } from "@/src/types";
 import VideoModal from "@/src/components/VideoModal";
+import TrackingProvider from "./components/TrackingProvider";
+import { trackProductClick } from "./services/trackingService";
 
 function UnlockModal({
   theme,
@@ -358,6 +360,7 @@ export default function App() {
         },
         body: JSON.stringify({ product }),
       }).catch(() => {});
+      await trackProductClick(product);
     } catch (err) {
       console.error(err);
     }
@@ -428,6 +431,7 @@ export default function App() {
     <div
       className={`min-h-screen transition-colors duration-300 ${theme === "dark" ? "bg-[#050508] text-white" : "bg-[#f8fafc] text-[#0f172a]"}`}
     >
+      <TrackingProvider />
       {toast && (
         <div
           className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-md animate-bounce max-w-sm text-left
