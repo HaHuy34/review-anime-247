@@ -22,7 +22,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       (req.headers["x-real-ip"] as string) ||
       req.socket?.remoteAddress ||
       "unknown";
+    const blockedIps =
+      process.env.BLOCKED_IPS?.split(",").map((ip) => ip.trim()) || [];
 
+    const normalizedIp = ip.replace(/^::ffff:/, "");
+
+    if (blockedIps.includes(normalizedIp)) {
+      return res.status(200).json({
+        ok: true,
+        skipped: true,
+        reason: "Blocked IP",
+      });
+    }
     const userAgent = (req.headers["user-agent"] as string) || "unknown";
 
     const embed = {

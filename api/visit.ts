@@ -11,6 +11,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       req.socket?.remoteAddress ||
       "unknown";
 
+    // chuẩn hoá IPv6 kiểu Vercel
+    const normalizedIp = ip.replace(/^::ffff:/, "");
+
+    // danh sách admin IP từ env
+    const adminIps =
+      process.env.ADMIN_IPS?.split(",").map((ip) => ip.trim()) || [];
+
+    if (adminIps.includes(normalizedIp)) {
+      return res.status(200).json({
+        ok: true,
+        admin: true,
+      });
+    }
     // 2. LẤY THÔNG TIN TRÌNH DUYỆT (User Agent)
     const userAgent = (req.headers["user-agent"] as string) || "unknown";
 
