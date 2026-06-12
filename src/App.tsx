@@ -679,9 +679,7 @@ export default function App() {
                                 )}
                                 <div className="relative z-10 space-y-1 text-left">
                                   <h4 className="font-bold text-sm sm:text-base flex items-center flex-wrap gap-1.5">
-                                    <span>
-                                      {item.vietnameseTitle || item.title}
-                                    </span>
+                                    <span>{item.title}</span>
                                     {item.badgeText ? (
                                       <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold uppercase animate-pulse tracking-wider">
                                         {item.badgeText}
