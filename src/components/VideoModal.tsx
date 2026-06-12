@@ -41,6 +41,16 @@ const getEmbedUrl = (url: string, iframeId: string) => {
     }
     return url;
   }
+  // Odysee
+  if (url.includes("odysee.com")) {
+    // Input: https://odysee.com/@channel/video-slug
+    // hoặc đã là embed: https://odysee.com/$/embed/video-slug
+    if (url.includes("/$/embed/")) return url;
+    const match = url.match(/odysee\.com\/([^?]+)/);
+    if (match?.[1]) {
+      return `https://odysee.com/$/embed/${match[1]}`;
+    }
+  }
 
   return url;
 };
