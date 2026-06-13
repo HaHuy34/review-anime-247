@@ -214,9 +214,8 @@ export default function Admin() {
 
           // ✅ Try/catch riêng cho stats API
           try {
-            const statsRes = await fetch(
-              `/api/stats?password=${import.meta.env.ADMIN_PASSWORD}`,
-            );
+            const statsRes = await fetch(`/api/stats?password=oklamggi12@`);
+            console.log("VITE_ADMIN_PASSWORD:", import.meta.env.ADMIN_PASSWORD);
             console.log("status:", statsRes.status);
 
             const statsData = await statsRes.json();
