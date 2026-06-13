@@ -6,6 +6,18 @@
       "destination": "/api/visit.ts"
     },
     {
+      "source": "/api/stats",
+      "destination": "/api/stats.ts"
+    },
+    {
+      "source": "/api/daily-summary",
+      "destination": "/api/daily-summary.ts"
+    },
+    {
+      "source": "/api/product-click",
+      "destination": "/api/product-click.ts"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }

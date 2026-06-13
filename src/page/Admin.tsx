@@ -51,10 +51,12 @@ import {
   getActiveLockOption,
   updateActiveLockOption,
 } from "../services/configService";
+import { log } from "console";
 
 export default function Admin() {
   const navigate = useNavigate();
   const [currentLockOption, setCurrentLockOption] = useState<number>(1);
+  const [todayStats, setTodayStats] = useState({ visits: 0, clicks: 0 });
   const [isOptionLoading, setIsOptionLoading] = useState(false);
   const [analytics, setAnalytics] = useState({
     totalViews: 0,
@@ -160,27 +162,44 @@ export default function Admin() {
 
   // THÊM DOẠN NÀY ĐỂ ĐẾM TỔNG TẬP PHIM
   useEffect(() => {
-    // Chỉ tải dữ liệu nếu đã vượt qua bước kiểm tra đăng nhập
     if (isAuthChecking) return;
 
     if (activeTab === "overview") {
       const fetchTotal = async () => {
         try {
-          loadProducts(); // Tiện thể load thêm products cho tab này
+          loadProducts();
 
-          // --- LOGIC GỐC CỦA BẠN CHÍNH LÀ ĐOẠN NÀY ---
           const promises = initialAnimeData.map((anime) =>
             getEpisodesByAnime(anime.id),
           );
           const results = await Promise.all(promises);
           const total = results.reduce((acc, curr) => acc + curr.length, 0);
+          setTotalAllEpisodes(total);
 
-          setTotalAllEpisodes(total); // Lưu state
           const stats = await getAnalyticsSumary();
           setAnalytics(stats);
 
           const recent = await getRecentVisits();
           setRecentVisits(recent);
+
+          // ✅ Try/catch riêng cho stats API
+          try {
+            const statsRes = await fetch(
+              `/api/stats?password=${import.meta.env.VITE_ADMIN_PASSWORD}`,
+            );
+            console.log("status:", statsRes.status);
+
+            const statsData = await statsRes.json();
+            console.log(statsData, "statsData");
+            if (statsData.ok) {
+              setTodayStats({
+                visits: statsData.visits,
+                clicks: statsData.clicks,
+              });
+            }
+          } catch (err) {
+            console.error("Lỗi fetch stats:", err);
+          }
         } catch (error) {
           console.error("Error loading total episodes", error);
         }
@@ -631,7 +650,7 @@ export default function Admin() {
                 <EyeClosed className="w-8 h-8 text-purple-500" />
               </div>
               <h3 className="text-4xl font-bold text-white mb-2">
-                <AnimatedCounter value={analytics.totalViews} />
+                <AnimatedCounter value={todayStats.visits} />
               </h3>
               <p className="text-slate-400 font-medium">Tổng Lượt Xem Web</p>
             </div>
@@ -668,7 +687,7 @@ export default function Admin() {
                 <span className="text-2xl">🛒</span>
               </div>
               <h3 className="text-4xl font-bold text-emerald-400 mb-2">
-                <AnimatedCounter value={analytics.todayClicks} />
+                <AnimatedCounter value={todayStats.clicks} />
               </h3>
               <p className="text-slate-400 font-medium">
                 Click Mua Hàng Hôm Nay
