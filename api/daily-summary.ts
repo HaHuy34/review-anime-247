@@ -7,16 +7,25 @@ const kv = new Redis({
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Bảo vệ endpoint, chỉ Vercel Cron mới gọi được
   const authHeader = req.headers["authorization"];
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ ok: false, error: "Unauthorized" });
   }
 
-  // Lấy số liệu hôm qua (vì cron chạy 23:59 hoặc 00:00)
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const date = yesterday.toISOString().slice(0, 10);
+  const nowUTC = new Date();
+  const hourUTC = nowUTC.getUTCHours();
+
+  // 00:00 UTC = 7h sáng VN → lấy hôm qua
+  // 16:00 UTC = 11h tối VN → lấy hôm nay
+  const isMorning = hourUTC === 0;
+
+  const target = new Date();
+  if (isMorning) target.setDate(target.getDate() - 1);
+  const date = target.toISOString().slice(0, 10);
+
+  const label = isMorning
+    ? "📊 BÁO CÁO HÔM QUA"
+    : "📊 BÁO CÁO HÔM NAY (CẬP NHẬT)";
 
   const visits = (await kv.get<number>(`stats:visit:${date}`)) || 0;
   const clicks = (await kv.get<number>(`stats:click:${date}`)) || 0;
@@ -27,8 +36,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const embed = {
-    title: "📊 BÁO CÁO NGÀY " + date,
-    color: 0x5865f2,
+    title: `${label} ${date}`,
+    color: isMorning ? 0xfaa61a : 0x5865f2,
     fields: [
       { name: "👀 Lượt truy cập", value: `**${visits}** lượt`, inline: true },
       {
