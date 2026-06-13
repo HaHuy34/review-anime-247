@@ -52,6 +52,36 @@ import {
   updateActiveLockOption,
 } from "../services/configService";
 import { log } from "console";
+const AnimatedCounter = ({ value }: { value: number }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    if (start === end) {
+      setDisplayValue(end);
+      return;
+    }
+    const duration = 1200;
+    let startTime: number | null = null;
+    let animationFrameId: number;
+
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setDisplayValue(Math.floor(ease * (end - start) + start));
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    };
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [value]);
+
+  return <>{displayValue}</>;
+};
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -185,7 +215,7 @@ export default function Admin() {
           // ✅ Try/catch riêng cho stats API
           try {
             const statsRes = await fetch(
-              `/api/stats?password=${import.meta.env.VITE_ADMIN_PASSWORD}`,
+              `/api/stats?password=${import.meta.env.ADMIN_PASSWORD}`,
             );
             console.log("status:", statsRes.status);
 
@@ -402,38 +432,6 @@ export default function Admin() {
       </div>
     );
   }
-
-  const AnimatedCounter = ({ value }: { value: number }) => {
-    const [displayValue, setDisplayValue] = useState(0);
-
-    useEffect(() => {
-      let start = 0;
-      const end = value;
-      if (start === end) {
-        setDisplayValue(end);
-        return;
-      }
-      const duration = 1200; // Thời gian chạy hiệu ứng (1.5 giây)
-      let startTime: number | null = null;
-      let animationFrameId: number;
-
-      const animate = (currentTime: number) => {
-        if (!startTime) startTime = currentTime;
-        const progress = Math.min((currentTime - startTime) / duration, 1);
-        // Hiệu ứng chậm dần về cuối (easeOutExpo)
-        const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-        setDisplayValue(Math.floor(ease * (end - start) + start));
-        if (progress < 1) {
-          animationFrameId = requestAnimationFrame(animate);
-        }
-      };
-      animationFrameId = requestAnimationFrame(animate);
-
-      return () => cancelAnimationFrame(animationFrameId);
-    }, [value]);
-
-    return <>{displayValue}</>;
-  };
 
   return (
     <div className="min-h-screen bg-[#050508] text-slate-300 py-10 px-4 md:px-8 font-sans relative">
