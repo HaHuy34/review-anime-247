@@ -11,59 +11,77 @@ import {
 } from "firebase/firestore";
 import { db } from "@/src/firebase/config";
 
-// --- DÀNH CHO CẬP NHẬT GIAO DIỆN CLIENT ---
+// ─── HELPERS ───────────────────────────────────────────────
+const BLOCKED_IPS = ["58.186.78.250", "1.55.219.74"];
+
+const isBlockedIP = (ip: string): boolean => {
+  if (BLOCKED_IPS.includes(ip)) return true;
+  return false;
+};
+
+const getMyIP = async (): Promise<string> => {
+  try {
+    const res = await fetch("https://api.ipify.org?format=json");
+    const { ip } = await res.json();
+    return ip;
+  } catch {
+    return "unknown";
+  }
+};
+
+// ─── CLIENT ────────────────────────────────────────────────
 
 export const trackPageVisit = async (ip: string, device: string) => {
-  if (ip === "58.186.78.250") return;
+  if (isBlockedIP(ip)) return;
   try {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Đặt mốc 0h đêm
+    today.setHours(0, 0, 0, 0);
 
     await addDoc(collection(db, "page_views"), {
       ip,
       device,
       visitedAt: serverTimestamp(),
-      dateKey: today.getTime(), // Để dễ filter sau này nếu cần
+      dateKey: today.getTime(),
     });
   } catch (error) {
     console.error("Error tracking visit:", error);
   }
 };
 
-// Hàm mới: Ghi nhận click sản phẩm
 export const trackProductClick = async (productData: any) => {
   try {
+    const ip = await getMyIP();
+    if (isBlockedIP(ip)) return; // 👈 filter IP admin
+
     await addDoc(collection(db, "product_clicks"), {
       productId: productData?.id || "unknown",
       productName: productData?.name || "unknown",
       clickedAt: serverTimestamp(),
+      ip, // lưu để debug sau này
     });
   } catch (error) {
     console.error("Error tracking product click:", error);
   }
 };
 
-// --- DÀNH CHO BẢNG ĐIỀU KHIỂN ADMIN ---
+// ─── ADMIN ─────────────────────────────────────────────────
+
 export const getAnalyticsSumary = async () => {
   try {
     const visitsRef = collection(db, "page_views");
     const clicksRef = collection(db, "product_clicks");
 
-    // 1. Tổng lượt views
     const totalSnapshot = await getCountFromServer(visitsRef);
     const totalViews = totalSnapshot.data().count;
 
-    // 2. Mobile views
     const mobileQuery = query(visitsRef, where("device", "==", "Mobile"));
     const mobileSnapshot = await getCountFromServer(mobileQuery);
     const mobileViews = mobileSnapshot.data().count;
 
-    // 3. PC views
     const pcQuery = query(visitsRef, where("device", "==", "PC"));
     const pcSnapshot = await getCountFromServer(pcQuery);
     const pcViews = pcSnapshot.data().count;
 
-    // 4. Lấy số lượng Click Sản Phẩm trong ngày (từ 00:00 sáng nay)
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const todayClicksQuery = query(
@@ -99,6 +117,66 @@ export const getRecentVisits = async () => {
     });
   } catch (error) {
     console.error("Error getting recent visits:", error);
+    return [];
+  }
+};
+
+// Lấy lượt xem theo từng ngày trong 7 ngày gần nhất
+export const getViewsLast7Days = async () => {
+  try {
+    const result: { date: string; views: number }[] = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const day = new Date();
+      day.setDate(day.getDate() - i);
+      day.setHours(0, 0, 0, 0);
+
+      const nextDay = new Date(day);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      const q = query(
+        collection(db, "page_views"),
+        where("visitedAt", ">=", day),
+        where("visitedAt", "<", nextDay),
+      );
+      const snap = await getCountFromServer(q);
+
+      result.push({
+        date: day.toLocaleDateString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
+        views: snap.data().count,
+      });
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Error getting views last 7 days:", error);
+    return [];
+  }
+};
+
+// Lấy top sản phẩm được click nhiều nhất
+export const getTopProducts = async (topN = 5) => {
+  try {
+    const snap = await getDocs(collection(db, "product_clicks"));
+
+    const countMap: Record<string, { name: string; count: number }> = {};
+    snap.docs.forEach((doc) => {
+      const { productId, productName } = doc.data();
+      if (!countMap[productId]) {
+        countMap[productId] = { name: productName, count: 0 };
+      }
+      countMap[productId].count++;
+    });
+
+    return Object.entries(countMap)
+      .map(([id, { name, count }]) => ({ id, name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, topN);
+  } catch (error) {
+    console.error("Error getting top products:", error);
     return [];
   }
 };
