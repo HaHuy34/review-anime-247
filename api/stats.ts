@@ -7,7 +7,14 @@ const kv = new Redis({
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Bảo vệ bằng password đơn giản
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   const { password } = req.query;
   if (password !== process.env.ADMIN_PASSWORD) {
     return res.status(401).json({ ok: false, error: "Unauthorized" });

@@ -1,12 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 
 import {
-  ArrowLeftToLine,
-  ArrowRightToLine,
-  Eye,
   EyeClosed,
   LayoutDashboard,
-  LogOut,
   Monitor,
   Search,
   Smartphone,
@@ -38,6 +34,7 @@ import {
   ExternalLink,
   ArrowLeft,
   BarChart,
+  Eye,
 } from "lucide-react";
 
 import { onAuthStateChanged } from "firebase/auth";
@@ -51,7 +48,7 @@ import {
   getActiveLockOption,
   updateActiveLockOption,
 } from "../services/configService";
-import { log } from "console";
+
 const AnimatedCounter = ({ value }: { value: number }) => {
   const [displayValue, setDisplayValue] = useState(0);
 
@@ -95,47 +92,33 @@ export default function Admin() {
     todayClicks: 0,
   });
   const [recentVisits, setRecentVisits] = useState<any[]>([]);
-  // 1. Thêm trạng thái chờ xác thực
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
-  // 2. Cập nhật logic kiểm tra tài khoản
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (!user) {
         navigate("/login");
       } else {
-        // Đã đăng nhập hợp lệ thì tắt trạng thái chờ
         setIsAuthChecking(false);
       }
     });
-
     return () => unsub();
   }, [navigate]);
 
   const [activeTab, setActiveTab] = useState<
     "overview" | "episodes" | "products"
   >("overview");
-
   const [totalEpisodes, setTotalEpisodes] = useState(0);
-
-  // Episodes State
-  const [selectedSeries, setSelectedSeries] = useState(initialAnimeData[1].id); // Default to DBZ
+  const [selectedSeries, setSelectedSeries] = useState(initialAnimeData[1].id);
   const [episodes, setEpisodes] = useState<any[]>([]);
-
-  // Products State
   const [products, setProducts] = useState<Product[]>([]);
-
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Form State (Episodes)
   const [episodeNum, setEpisodeNum] = useState("");
   const [episodeName, setEpisodeName] = useState("");
   const [link, setLink] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-
-  // Form State (Products)
   const [productName, setProductName] = useState("");
   const [productImage, setProductImage] = useState("");
   const [productLink, setProductLink] = useState("");
@@ -152,10 +135,9 @@ export default function Admin() {
     type: "success" | "info" | "error" = "success",
   ) => {
     setToast({ message, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 3000); // 3000ms là 3 giây (đừng để 300000 vì nó sẽ lâu tắt)
+    setTimeout(() => setToast(null), 3000);
   };
+
   useEffect(() => {
     const fetchOption = async () => {
       const opt = await getActiveLockOption();
@@ -164,7 +146,6 @@ export default function Admin() {
     fetchOption();
   }, [activeTab]);
 
-  // Hàm xử lý khi bấm đổi Option
   const handleSaveLockOption = async (optionNum: number) => {
     setIsOptionLoading(true);
     const success = await updateActiveLockOption(optionNum);
@@ -179,18 +160,16 @@ export default function Admin() {
 
   useEffect(() => {
     if (isAuthChecking) return;
-
     if (activeTab === "episodes") {
       loadEpisodes(selectedSeries);
     } else if (activeTab === "products") {
       loadProducts();
     } else if (activeTab === "overview") {
-      loadProducts(); // Để lấy tổng số lượng sản phẩm
-      loadTotalEpisodes(); // Để đếm tổng số tập phim
+      loadProducts();
+      loadTotalEpisodes();
     }
   }, [selectedSeries, activeTab, isAuthChecking]);
 
-  // THÊM DOẠN NÀY ĐỂ ĐẾM TỔNG TẬP PHIM
   useEffect(() => {
     if (isAuthChecking) return;
 
@@ -212,12 +191,14 @@ export default function Admin() {
           const recent = await getRecentVisits();
           setRecentVisits(recent);
 
-          // ✅ Try/catch riêng cho stats API
+          // ✅ Fix: dùng full URL production khi chạy local
           try {
-            const statsRes = await fetch(`/api/stats?password=oklamggi12@`);
-            console.log("VITE_ADMIN_PASSWORD:", import.meta.env.ADMIN_PASSWORD);
-            console.log("status:", statsRes.status);
-
+            const baseUrl = import.meta.env.DEV
+              ? "https://reviews-anime-247.vercel.app"
+              : "";
+            const statsRes = await fetch(
+              `${baseUrl}/api/stats?password=${import.meta.env.VITE_ADMIN_PASSWORD}`,
+            );
             const statsData = await statsRes.json();
             console.log(statsData, "statsData");
             if (statsData.ok) {
@@ -252,11 +233,11 @@ export default function Admin() {
       setIsLoading(false);
     }
   };
+
   const loadTotalEpisodes = async () => {
     setIsLoading(true);
     try {
       let total = 0;
-      // Chạy qua từng series để cộng dồn số tập
       for (const anime of initialAnimeData) {
         const eps = await getEpisodesByAnime(anime.id);
         total += eps.length;
@@ -287,7 +268,6 @@ export default function Admin() {
       triggerToast("Vui lòng điền đủ thông tin!", "error");
       return;
     }
-
     setIsSaving(true);
     try {
       const data = {
@@ -296,7 +276,6 @@ export default function Admin() {
         name: episodeName,
         src: link,
       };
-
       if (editingId) {
         await updateEpisode(editingId, data);
         triggerToast("Đã cập nhật tập phim thành công!", "success");
@@ -304,7 +283,6 @@ export default function Admin() {
         await addEpisode(data);
         triggerToast("Đã thêm tập phim mới!", "success");
       }
-
       resetForm();
       loadEpisodes(selectedSeries);
     } catch (error) {
@@ -321,7 +299,6 @@ export default function Admin() {
       triggerToast("Vui lòng điền đủ thông tin!", "error");
       return;
     }
-
     setIsSaving(true);
     try {
       const data: Product = {
@@ -330,7 +307,6 @@ export default function Admin() {
         link: productLink,
         description: productDescription,
       };
-
       if (editingId) {
         await updateProduct(editingId, data);
         triggerToast("Đã cập nhật sản phẩm thành công!", "success");
@@ -338,7 +314,6 @@ export default function Admin() {
         await addProduct(data);
         triggerToast("Đã thêm sản phẩm mới!", "success");
       }
-
       resetForm();
       loadProducts();
     } catch (error) {
@@ -368,7 +343,6 @@ export default function Admin() {
 
   const handleDeleteEpisode = async (id: string) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa tập phim này?")) return;
-
     setIsLoading(true);
     try {
       await deleteEpisode(id);
@@ -383,7 +357,6 @@ export default function Admin() {
 
   const handleDeleteProduct = async (id: string) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
-
     setIsLoading(true);
     try {
       await deleteProduct(id);
@@ -406,7 +379,7 @@ export default function Admin() {
     setProductLink("");
     setProductDescription("");
   };
-  // THÊM MỚI: Logic lọc danh sách dựa trên tìm kiếm
+
   const filteredEpisodes = useMemo(() => {
     if (!searchQuery.trim()) return episodes;
     return episodes.filter(
@@ -423,7 +396,6 @@ export default function Admin() {
     );
   }, [products, searchQuery]);
 
-  // 3. Nếu đang chờ tải thì hiển thị vòng xoay đen thui (tránh lộ data và form nhập)
   if (isAuthChecking) {
     return (
       <div className="min-h-screen bg-[#050508] flex flex-col items-center justify-center">
@@ -534,6 +506,7 @@ export default function Admin() {
             </div>
           </div>
         )}
+
         {activeTab === "overview" ? (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -550,7 +523,6 @@ export default function Admin() {
                 thiệu người dùng click ủng hộ bạn trước khi xem phim.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Nút chọn Option 1 */}
                 <button
                   type="button"
                   onClick={() => handleSaveLockOption(1)}
@@ -576,7 +548,6 @@ export default function Admin() {
                   </p>
                 </button>
 
-                {/* Nút chọn Option 2 */}
                 <button
                   type="button"
                   onClick={() => handleSaveLockOption(2)}
@@ -603,7 +574,8 @@ export default function Admin() {
                 </button>
               </div>
             </div>
-            {/* Thẻ Thống Kê 1: Gồm bao nhiêu Series Phim */}
+
+            {/* Thẻ Thống Kê 1 */}
             <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
               <div className="w-14 h-14 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center mb-4 border border-blue-500/20">
                 <LayoutDashboard className="w-7 h-7" />
@@ -616,7 +588,7 @@ export default function Admin() {
               </p>
             </div>
 
-            {/* Thẻ Thống Kê 2: Gồm bao nhiêu Tập Phim */}
+            {/* Thẻ Thống Kê 2 */}
             <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
               <div className="w-14 h-14 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center mb-4 border border-amber-500/20">
                 <Film className="w-7 h-7" />
@@ -625,11 +597,11 @@ export default function Admin() {
                 Số tập (Series đang chọn)
               </h3>
               <p className="text-4xl font-bold text-white">
-                {" "}
                 <AnimatedCounter value={totalAllEpisodes} />
               </p>
             </div>
-            {/* Thẻ Thống Kê 3: Gồm bao nhiêu Sản Phẩm */}
+
+            {/* Thẻ Thống Kê 3 */}
             <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
               <div className="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center mb-4 border border-emerald-500/20">
                 <Package className="w-7 h-7" />
@@ -641,7 +613,8 @@ export default function Admin() {
                 <AnimatedCounter value={products.length} />
               </p>
             </div>
-            {/* 1. KHỐI HIỂN THỊ LƯỢT XEM */}
+
+            {/* Lượt truy cập hôm nay - từ Redis */}
             <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center group hover:border-purple-500/50 transition-colors">
               <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <EyeClosed className="w-8 h-8 text-purple-500" />
@@ -649,10 +622,12 @@ export default function Admin() {
               <h3 className="text-4xl font-bold text-white mb-2">
                 <AnimatedCounter value={todayStats.visits} />
               </h3>
-              <p className="text-slate-400 font-medium">Tổng Lượt Xem Web</p>
+              <p className="text-slate-400 font-medium">
+                Lượt Truy Cập Hôm Nay
+              </p>
             </div>
 
-            {/* 2. KHỐI THỐNG KÊ THIẾT BỊ APP/PC */}
+            {/* Thiết bị */}
             <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center">
               <div className="flex gap-4 w-full justify-around mt-4">
                 <div className="flex flex-col items-center">
@@ -679,6 +654,8 @@ export default function Admin() {
                 Thiết Bị Truy Cập
               </p>
             </div>
+
+            {/* Click mua hàng hôm nay - từ Redis */}
             <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center group hover:border-emerald-500/50 transition-colors">
               <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <span className="text-2xl">🛒</span>
@@ -691,7 +668,7 @@ export default function Admin() {
               </p>
             </div>
 
-            {/* 3. BẢNG TOP 10 TRUY CẬP IP VỪA RỒI (Nên để ngay bên dưới thẻ grid) */}
+            {/* Lịch sử truy cập */}
             <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 mt-8 md:col-span-full">
               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <LayoutDashboard className="w-5 h-5 text-amber-500" />
@@ -775,7 +752,6 @@ export default function Admin() {
                   )}
                 </h2>
 
-                {/* Form Content */}
                 <AnimatePresence mode="wait">
                   {activeTab === "episodes" ? (
                     <motion.form
@@ -803,7 +779,6 @@ export default function Admin() {
                           }}
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-slate-400 mb-1">
                           Tên Tập
@@ -816,7 +791,6 @@ export default function Admin() {
                           onChange={(e) => setEpisodeName(e.target.value)}
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-slate-400 mb-1">
                           Link Embed Dailymotion
@@ -829,7 +803,6 @@ export default function Admin() {
                           onChange={(e) => setLink(e.target.value)}
                         />
                       </div>
-
                       <div className="pt-4">
                         <button
                           type="submit"
@@ -873,7 +846,6 @@ export default function Admin() {
                           onChange={(e) => setProductName(e.target.value)}
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-slate-400 mb-1">
                           Link Ảnh Sản Phẩm
@@ -887,7 +859,6 @@ export default function Admin() {
                         />
                         {productImage && (
                           <div className="mt-3 relative w-full h-32 rounded-lg overflow-hidden border border-white/10">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={productImage}
                               alt="Preview"
@@ -896,7 +867,6 @@ export default function Admin() {
                           </div>
                         )}
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-slate-400 mb-1">
                           Mô tả Sản Phẩm
@@ -911,7 +881,6 @@ export default function Admin() {
                           }
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-slate-400 mb-1">
                           Link Shopee
@@ -924,7 +893,6 @@ export default function Admin() {
                           onChange={(e) => setProductLink(e.target.value)}
                         />
                       </div>
-
                       <div className="pt-4">
                         <button
                           type="submit"
@@ -960,9 +928,7 @@ export default function Admin() {
                       ? "Danh sách tập phim"
                       : "Danh sách sản phẩm"}
                   </h2>
-
                   <div className="flex items-center gap-4 w-full sm:w-auto">
-                    {/* Thanh tìm kiếm tiện lợi */}
                     <div className="relative flex-1 sm:w-64">
                       <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                       <input
@@ -973,7 +939,6 @@ export default function Admin() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
                     </div>
-
                     <div className="text-sm px-3 py-2 bg-white/10 text-slate-300 rounded-lg font-medium border border-white/5 whitespace-nowrap">
                       Tổng:{" "}
                       {activeTab === "episodes"
@@ -983,7 +948,6 @@ export default function Admin() {
                   </div>
                 </div>
 
-                {/* Scrollable Container (Thanh cuộn dọc độc lập) */}
                 <div className="flex-1 overflow-y-auto pr-2 pb-4 -mr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent hover:scrollbar-thumb-white/20">
                   <AnimatePresence mode="wait">
                     {isLoading ? (
@@ -1034,7 +998,6 @@ export default function Admin() {
                                 <div className="w-12 h-12 rounded-lg bg-amber-500/20 text-amber-500 flex flex-shrink-0 items-center justify-center font-bold text-lg border border-amber-500/20">
                                   {ep.episode}
                                 </div>
-
                                 <div className="truncate">
                                   <div className="flex items-center">
                                     <h3 className="font-semibold text-slate-200 truncate">
@@ -1055,7 +1018,6 @@ export default function Admin() {
                                   </a>
                                 </div>
                               </div>
-
                               <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
                                 <button
                                   onClick={() => handleEditEpisode(ep)}
@@ -1112,7 +1074,6 @@ export default function Admin() {
                                 alt={prod.name}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                               />
-
                               <div className="absolute top-2 right-2 flex gap-1 z-10">
                                 <button
                                   onClick={() => handleEditProduct(prod)}
