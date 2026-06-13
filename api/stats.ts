@@ -10,7 +10,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
   if (req.method === "OPTIONS") return res.status(200).end();
 
   const { password } = req.query;
@@ -23,6 +22,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   yesterday.setDate(yesterday.getDate() - 1);
   const dateYesterday = yesterday.toISOString().slice(0, 10);
 
+  // Lấy data 7 ngày gần nhất
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().slice(0, 10);
+  });
+
   const [visits, clicks, visitsYesterday, clicksYesterday] = await Promise.all([
     kv.get<number>(`stats:visit:${today}`),
     kv.get<number>(`stats:click:${today}`),
@@ -30,13 +36,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     kv.get<number>(`stats:click:${dateYesterday}`),
   ]);
 
-  // ✅ Lấy danh sách IP visit và click hôm nay
+  // Lấy data từng ngày trong 7 ngày
+  const chart7Days = await Promise.all(
+    last7Days.map(async (date) => {
+      const [v, c] = await Promise.all([
+        kv.get<number>(`stats:visit:${date}`),
+        kv.get<number>(`stats:click:${date}`),
+      ]);
+      return { date, visits: v || 0, clicks: c || 0 };
+    }),
+  );
+
+  // Lấy danh sách IP
   const [visitKeys, clickKeys] = await Promise.all([
     kv.keys(`visit:*:${today}`),
     kv.keys(`click:*:${today}`),
   ]);
-
-  // Tách IP từ key "visit:IP:date" → IP
   const visitIps = visitKeys.map((k) => k.split(":")[1]);
   const clickIps = clickKeys.map((k) => k.split(":")[1]);
 
@@ -48,7 +63,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     yesterday: dateYesterday,
     visitsYesterday: visitsYesterday || 0,
     clicksYesterday: clicksYesterday || 0,
-    visitIps, // danh sách IP đã vào web hôm nay
-    clickIps, // danh sách IP đã click sản phẩm hôm nay
+    visitIps,
+    clickIps,
+    chart7Days,
   });
 }

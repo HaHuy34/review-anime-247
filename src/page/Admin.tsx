@@ -1,4 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 import {
   EyeClosed,
@@ -84,7 +94,11 @@ export default function Admin() {
   const navigate = useNavigate();
   const [currentLockOption, setCurrentLockOption] = useState<number>(1);
   const [todayStats, setTodayStats] = useState({ visits: 0, clicks: 0 });
+  const [ipTab, setIpTab] = useState<"visit" | "click">("visit");
   const [isOptionLoading, setIsOptionLoading] = useState(false);
+  const [chart7Days, setChart7Days] = useState<
+    { date: string; visits: number; clicks: number }[]
+  >([]);
   const [analytics, setAnalytics] = useState({
     totalViews: 0,
     mobileViews: 0,
@@ -217,6 +231,7 @@ export default function Admin() {
                 visitIps: statsData.visitIps || [],
                 clickIps: statsData.clickIps || [],
               });
+              setChart7Days(statsData.chart7Days || []);
             }
           } catch (err) {
             console.error("Lỗi fetch stats:", err);
@@ -586,6 +601,50 @@ export default function Admin() {
               </div>
             </div>
 
+            {/* BIỂU ĐỒ 7 NGÀY */}
+            <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 mt-6 md:col-span-full">
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <BarChart className="w-5 h-5 text-amber-500" />
+                Lượt Truy Cập 7 Ngày Gần Nhất
+              </h2>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={chart7Days}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: "#94a3b8", fontSize: 12 }}
+                    tickFormatter={(v) => v.slice(5)} // Hiện MM-DD
+                  />
+                  <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: "#0f172a",
+                      border: "1px solid #ffffff10",
+                      borderRadius: 8,
+                    }}
+                    labelStyle={{ color: "#fff" }}
+                  />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="visits"
+                    name="Lượt truy cập"
+                    stroke="#a855f7"
+                    strokeWidth={2}
+                    dot={{ fill: "#a855f7" }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="clicks"
+                    name="Lượt click"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={{ fill: "#10b981" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               {/* Thẻ Thống Kê 1 */}
               <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
@@ -627,7 +686,7 @@ export default function Admin() {
               </div>
 
               {/* Lượt truy cập hôm nay - từ Redis */}
-              <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center group hover:border-purple-500/50 transition-colors">
+              <div className="hidden bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center group hover:border-purple-500/50 transition-colors">
                 <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <EyeClosed className="w-8 h-8 text-purple-500" />
                 </div>
@@ -640,7 +699,7 @@ export default function Admin() {
               </div>
 
               {/* Thiết bị */}
-              <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center">
+              <div className="hidden bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center">
                 <div className="flex gap-4 w-full justify-around mt-4">
                   <div className="flex flex-col items-center">
                     <Smartphone className="w-8 h-8 text-pink-500 mb-2" />
@@ -668,7 +727,7 @@ export default function Admin() {
               </div>
 
               {/* Click mua hàng hôm nay - từ Redis */}
-              <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center group hover:border-emerald-500/50 transition-colors">
+              <div className="hidden bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center group hover:border-emerald-500/50 transition-colors">
                 <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <span className="text-2xl">🛒</span>
                 </div>
@@ -749,12 +808,81 @@ export default function Admin() {
             </div>
             {/* BẢNG IP CLICK VÀ VISIT HÔM NAY */}
             <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 mt-6 md:col-span-full">
-              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <LayoutDashboard className="w-5 h-5 text-amber-500" />
                 Danh Sách IP Hôm Nay
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-2 gap-6">
-                {/* Cột IP vào web */}
+
+              {/* Tab switcher - chỉ hiện trên mobile */}
+              <div className="md:hidden flex bg-slate-900 p-1 rounded-lg border border-white/10 w-fit mb-4">
+                <button
+                  onClick={() => setIpTab("visit")}
+                  className={`cursor-pointer flex items-center gap-2 px-5 py-2 rounded-md text-sm font-medium transition-all ${ipTab === "visit" ? "bg-purple-500 text-white shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                >
+                  <EyeClosed className="w-4 h-4" />
+                  Vào Web ({ipLists.visitIps.length})
+                </button>
+                <button
+                  onClick={() => setIpTab("click")}
+                  className={`cursor-pointer flex items-center gap-2 px-5 py-2 rounded-md text-sm font-medium transition-all ${ipTab === "click" ? "bg-emerald-500 text-white shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                >
+                  🛒 Click ({ipLists.clickIps.length})
+                </button>
+              </div>
+
+              {/* Mobile: hiện theo tab */}
+              <div className="md:hidden space-y-2 max-h-72 overflow-y-auto">
+                {ipTab === "visit" ? (
+                  ipLists.visitIps.length === 0 ? (
+                    <p className="text-slate-500 italic text-sm">
+                      Chưa có IP nào
+                    </p>
+                  ) : (
+                    ipLists.visitIps.map((ip, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-3 bg-slate-900 px-4 py-2.5 rounded-lg border border-white/5"
+                      >
+                        <span className="text-xs text-slate-500 w-5">
+                          {idx + 1}
+                        </span>
+                        <span className="font-mono text-sm text-white">
+                          {ip}
+                        </span>
+                        {ipLists.clickIps.includes(ip) && (
+                          <span className="ml-auto text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">
+                            Đã click 🛒
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  )
+                ) : ipLists.clickIps.length === 0 ? (
+                  <p className="text-slate-500 italic text-sm">
+                    Chưa có IP nào
+                  </p>
+                ) : (
+                  ipLists.clickIps.map((ip, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-3 bg-slate-900 px-4 py-2.5 rounded-lg border border-white/5"
+                    >
+                      <span className="text-xs text-slate-500 w-5">
+                        {idx + 1}
+                      </span>
+                      <span className="font-mono text-sm text-white">{ip}</span>
+                      {ipLists.visitIps.includes(ip) && (
+                        <span className="ml-auto text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full cursor-pointer">
+                          Đã vào web 👁️
+                        </span>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop: hiện 2 cột */}
+              <div className="hidden md:grid grid-cols-2 gap-6">
                 <div>
                   <h3 className="text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2">
                     <EyeClosed className="w-4 h-4" />
@@ -788,7 +916,6 @@ export default function Admin() {
                   </div>
                 </div>
 
-                {/* Cột IP click sản phẩm */}
                 <div>
                   <h3 className="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
                     <span>🛒</span>
