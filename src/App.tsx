@@ -402,6 +402,7 @@ export default function App() {
         },
         body: JSON.stringify({ product }),
       }).catch(() => {});
+      window.open(product.link, "_blank");
       await trackProductClick(product);
     } catch (err) {
       console.error(err);

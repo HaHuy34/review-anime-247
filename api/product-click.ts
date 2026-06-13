@@ -39,6 +39,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const embed = {
       title: "🛍️ PRODUCT CLICK",
       color: 0xee4d2d,
+      image: {
+        url: product?.image,
+      },
       fields: [
         {
           name: "📦 Product",

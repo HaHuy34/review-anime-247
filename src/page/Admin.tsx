@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import {
   ArrowLeftToLine,
   ArrowRightToLine,
+  Eye,
   EyeClosed,
   LayoutDashboard,
   LogOut,
@@ -1017,10 +1018,17 @@ export default function Admin() {
                                 <div className="w-12 h-12 rounded-lg bg-amber-500/20 text-amber-500 flex flex-shrink-0 items-center justify-center font-bold text-lg border border-amber-500/20">
                                   {ep.episode}
                                 </div>
+
                                 <div className="truncate">
-                                  <h3 className="font-semibold text-slate-200 truncate">
-                                    {ep.name}
-                                  </h3>
+                                  <div className="flex items-center">
+                                    <h3 className="font-semibold text-slate-200 truncate">
+                                      {ep.name}
+                                    </h3>
+                                    <span className="flex items-center ml-[57px] text-gray-500 gap-2 text-[12px]">
+                                      <Eye className="w-4 h-4" />
+                                      900
+                                    </span>
+                                  </div>
                                   <a
                                     href={ep.src}
                                     target="_blank"
@@ -1075,7 +1083,7 @@ export default function Admin() {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                         transition={{ duration: 0.3 }}
-                        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                        className="grid grid-cols-2 sm:grid-cols-3 gap-4"
                       >
                         {filteredProducts.map((prod) => (
                           <div
@@ -1086,7 +1094,7 @@ export default function Admin() {
                               <img
                                 src={prod.image}
                                 alt={prod.name}
-                                className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500"
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                               />
 
                               <div className="absolute top-2 right-2 flex gap-1 z-10">
