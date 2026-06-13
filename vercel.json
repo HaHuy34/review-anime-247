@@ -9,5 +9,11 @@
       "source": "/(.*)",
       "destination": "/"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/daily-summary",
+      "schedule": "0 17 * * *"
+    }
   ]
 }

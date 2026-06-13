@@ -37,6 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     await kv.set(dedupKey, 1, { ex: 86400 });
+    await kv.incr(`stats:visit:${today}`);
 
     const userAgent = (req.headers["user-agent"] as string) || "unknown";
 
