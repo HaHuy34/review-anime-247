@@ -1,4 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { Redis } from "@upstash/redis";
+
+const kv = new Redis({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -13,54 +19,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { product } = req.body || {};
 
-    // IP
     const forwarded = req.headers["x-forwarded-for"];
     const ipRaw = Array.isArray(forwarded) ? forwarded[0] : forwarded;
-
     const ip =
       ipRaw?.split(",")[0].trim() ||
       (req.headers["x-real-ip"] as string) ||
       req.socket?.remoteAddress ||
       "unknown";
-    const blockedIps =
-      process.env.BLOCKED_IPS?.split(",").map((ip) => ip.trim()) || [];
 
     const normalizedIp = ip.replace(/^::ffff:/, "");
 
+    const blockedIps =
+      process.env.BLOCKED_IPS?.split(",").map((i) => i.trim()) || [];
     if (blockedIps.includes(normalizedIp)) {
-      return res.status(200).json({
-        ok: true,
-        skipped: true,
-        reason: "Blocked IP",
-      });
+      return res
+        .status(200)
+        .json({ ok: true, skipped: true, reason: "Blocked IP" });
     }
-    const userAgent = (req.headers["user-agent"] as string) || "unknown";
+
+    // Dedup theo IP + ngày
+    const today = new Date().toISOString().slice(0, 10);
+    const dedupKey = `click:${normalizedIp}:${today}`;
+
+    const alreadySent = await kv.get(dedupKey);
+    if (alreadySent) {
+      return res
+        .status(200)
+        .json({ ok: true, skipped: true, reason: "Already notified today" });
+    }
+
+    await kv.set(dedupKey, 1, { ex: 86400 });
 
     const embed = {
       title: "🛍️ PRODUCT CLICK",
       color: 0xee4d2d,
-      image: {
-        url: product?.image,
-      },
+      image: { url: product?.image },
       fields: [
-        {
-          name: "📦 Product",
-          value: product?.name || "Unknown",
-        },
-        {
-          name: "🔗 Link",
-          value: product?.link || "No link",
-        },
-        {
-          name: "🌐 IP",
-          value: `\`${ip}\``,
-          inline: true,
-        },
-        {
-          name: "📱 Device",
-          value: `\`${userAgent.slice(0, 300)}\``,
-          inline: false,
-        },
+        { name: "📦 Product", value: product?.name || "Unknown" },
+        { name: "🌐 IP", value: `\`${normalizedIp}\``, inline: true },
       ],
       timestamp: new Date().toISOString(),
     };
@@ -73,9 +69,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ ok: true });
   } catch (err: any) {
-    return res.status(500).json({
-      ok: false,
-      error: err.message || "Server error",
-    });
+    return res
+      .status(500)
+      .json({ ok: false, error: err.message || "Server error" });
   }
 }

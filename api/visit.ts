@@ -1,8 +1,13 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { Redis } from "@upstash/redis";
+
+const kv = new Redis({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    // 1. LẤY SẠCH IP USER (Chuẩn hóa cho Vercel proxy)
     const forwarded = req.headers["x-forwarded-for"];
     const ipRaw = Array.isArray(forwarded) ? forwarded[0] : forwarded;
     const ip =
@@ -11,29 +16,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       req.socket?.remoteAddress ||
       "unknown";
 
-    // chuẩn hoá IPv6 kiểu Vercel
     const normalizedIp = ip.replace(/^::ffff:/, "");
 
-    // danh sách admin IP từ env
     const adminIps =
       process.env.ADMIN_IPS?.split(",").map((ip) => ip.trim()) || [];
 
     if (adminIps.includes(normalizedIp)) {
-      return res.status(200).json({
-        ok: true,
-        admin: true,
-      });
+      return res.status(200).json({ ok: true, admin: true });
     }
-    // 2. LẤY THÔNG TIN TRÌNH DUYỆT (User Agent)
+
+    // ✅ Dedup theo IP + ngày
+    const today = new Date().toISOString().slice(0, 10);
+    const dedupKey = `visit:${normalizedIp}:${today}`;
+
+    const alreadySent = await kv.get(dedupKey);
+    if (alreadySent) {
+      return res
+        .status(200)
+        .json({ ok: true, skipped: true, reason: "Already notified today" });
+    }
+
+    await kv.set(dedupKey, 1, { ex: 86400 });
+
     const userAgent = (req.headers["user-agent"] as string) || "unknown";
 
-    // 3. TRA CỨU ĐỊA LÝ/ISP (Với 2 dịch vụ phòng hờ lỗi)
     let geo: any = null;
 
     try {
       const res1 = await fetch(`https://ipwho.is/${ip}`);
       const data1 = await res1.json();
-
       if (data1 && data1.success) {
         geo = {
           country: data1.country || "Unknown",
@@ -45,14 +56,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
       }
     } catch (e) {
-      console.error("Dịch vụ ipwho.is lỗi, chuyển qua fallback...", e);
+      console.error("ipwho.is lỗi", e);
     }
 
     if (!geo) {
       try {
         const res2 = await fetch(`https://ipapi.co/${ip}/json/`);
         const data2 = await res2.json();
-
         geo = {
           country: data2.country_name || "Unknown",
           region: data2.region || "",
@@ -73,7 +83,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // 4. GỬI EMBED SANG DISCORD WEBHOOK
     const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
     const coordsStr =
       geo.lat && geo.lon
@@ -82,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const embed = {
       title: "🔥 PHÁT HIỆN LƯỢT TRUY CẬP WEBSITE MỚI (VERCEL)",
-      color: 16742912, // Màu cam rực rỡ
+      color: 16742912,
       fields: [
         { name: "🌍 Quốc gia", value: geo.country || "Không rõ", inline: true },
         { name: "🏙️ Thành phố", value: geo.city || "Không rõ", inline: true },
@@ -111,26 +120,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          embeds: [embed],
-        }),
+        body: JSON.stringify({ embeds: [embed] }),
       });
-    } else {
-      console.warn(
-        "Chưa cấu hình DISCORD_WEBHOOK_URL trong Vercel Environment Variables.",
-      );
     }
 
-    // 5. TRẢ VỀ KẾT QUẢ CHO CLIENT
-    return res.status(200).json({
-      ok: true,
-      ip,
-      geo,
-    });
+    return res.status(200).json({ ok: true, ip, geo });
   } catch (err: any) {
-    return res.status(500).json({
-      ok: false,
-      error: err?.message || "Internal Server Error",
-    });
+    return res
+      .status(500)
+      .json({ ok: false, error: err?.message || "Internal Server Error" });
   }
 }
