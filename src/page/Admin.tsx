@@ -93,6 +93,13 @@ export default function Admin() {
   });
   const [recentVisits, setRecentVisits] = useState<any[]>([]);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [ipLists, setIpLists] = useState<{
+    visitIps: string[];
+    clickIps: string[];
+  }>({
+    visitIps: [],
+    clickIps: [],
+  });
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -205,6 +212,10 @@ export default function Admin() {
               setTodayStats({
                 visits: statsData.visits,
                 clicks: statsData.clicks,
+              });
+              setIpLists({
+                visitIps: statsData.visitIps || [],
+                clickIps: statsData.clickIps || [],
               });
             }
           } catch (err) {
@@ -511,7 +522,7 @@ export default function Admin() {
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-1 gap-6"
           >
             {/* Khối cấu hình tùy chọn khóa */}
             <div className="bg-slate-950 p-6 rounded-2xl border border-white/5 md:col-span-full mb-6">
@@ -575,101 +586,103 @@ export default function Admin() {
               </div>
             </div>
 
-            {/* Thẻ Thống Kê 1 */}
-            <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
-              <div className="w-14 h-14 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center mb-4 border border-blue-500/20">
-                <LayoutDashboard className="w-7 h-7" />
-              </div>
-              <h3 className="text-slate-400 font-medium mb-2">
-                Tổng số Series Anime
-              </h3>
-              <p className="text-4xl font-bold text-white">
-                <AnimatedCounter value={initialAnimeData.length} />
-              </p>
-            </div>
-
-            {/* Thẻ Thống Kê 2 */}
-            <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
-              <div className="w-14 h-14 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center mb-4 border border-amber-500/20">
-                <Film className="w-7 h-7" />
-              </div>
-              <h3 className="text-slate-400 font-medium mb-2">
-                Số tập (Series đang chọn)
-              </h3>
-              <p className="text-4xl font-bold text-white">
-                <AnimatedCounter value={totalAllEpisodes} />
-              </p>
-            </div>
-
-            {/* Thẻ Thống Kê 3 */}
-            <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
-              <div className="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center mb-4 border border-emerald-500/20">
-                <Package className="w-7 h-7" />
-              </div>
-              <h3 className="text-slate-400 font-medium mb-2">
-                Tổng số Sản Phẩm
-              </h3>
-              <p className="text-4xl font-bold text-white">
-                <AnimatedCounter value={products.length} />
-              </p>
-            </div>
-
-            {/* Lượt truy cập hôm nay - từ Redis */}
-            <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center group hover:border-purple-500/50 transition-colors">
-              <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <EyeClosed className="w-8 h-8 text-purple-500" />
-              </div>
-              <h3 className="text-4xl font-bold text-white mb-2">
-                <AnimatedCounter value={todayStats.visits} />
-              </h3>
-              <p className="text-slate-400 font-medium">
-                Lượt Truy Cập Hôm Nay
-              </p>
-            </div>
-
-            {/* Thiết bị */}
-            <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center">
-              <div className="flex gap-4 w-full justify-around mt-4">
-                <div className="flex flex-col items-center">
-                  <Smartphone className="w-8 h-8 text-pink-500 mb-2" />
-                  <h4 className="text-2xl font-bold text-white">
-                    <AnimatedCounter value={analytics.mobileViews} />
-                  </h4>
-                  <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">
-                    Mobile
-                  </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {/* Thẻ Thống Kê 1 */}
+              <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
+                <div className="w-14 h-14 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center mb-4 border border-blue-500/20">
+                  <LayoutDashboard className="w-7 h-7" />
                 </div>
-                <div className="w-px bg-white/10 mx-2"></div>
-                <div className="flex flex-col items-center">
-                  <Monitor className="w-8 h-8 text-cyan-500 mb-2" />
-                  <h4 className="text-2xl font-bold text-white">
-                    <AnimatedCounter value={analytics.pcViews} />
-                  </h4>
-                  <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">
-                    Desktop
-                  </p>
-                </div>
+                <h3 className="text-slate-400 font-medium mb-2">
+                  Tổng số Series Anime
+                </h3>
+                <p className="text-4xl font-bold text-white">
+                  <AnimatedCounter value={initialAnimeData.length} />
+                </p>
               </div>
-              <p className="text-slate-400 font-medium mt-6">
-                Thiết Bị Truy Cập
-              </p>
-            </div>
 
-            {/* Click mua hàng hôm nay - từ Redis */}
-            <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center group hover:border-emerald-500/50 transition-colors">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <span className="text-2xl">🛒</span>
+              {/* Thẻ Thống Kê 2 */}
+              <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
+                <div className="w-14 h-14 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center mb-4 border border-amber-500/20">
+                  <Film className="w-7 h-7" />
+                </div>
+                <h3 className="text-slate-400 font-medium mb-2">
+                  Số tập (Series đang chọn)
+                </h3>
+                <p className="text-4xl font-bold text-white">
+                  <AnimatedCounter value={totalAllEpisodes} />
+                </p>
               </div>
-              <h3 className="text-4xl font-bold text-emerald-400 mb-2">
-                <AnimatedCounter value={todayStats.clicks} />
-              </h3>
-              <p className="text-slate-400 font-medium">
-                Click Mua Hàng Hôm Nay
-              </p>
+
+              {/* Thẻ Thống Kê 3 */}
+              <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
+                <div className="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center mb-4 border border-emerald-500/20">
+                  <Package className="w-7 h-7" />
+                </div>
+                <h3 className="text-slate-400 font-medium mb-2">
+                  Tổng số Sản Phẩm
+                </h3>
+                <p className="text-4xl font-bold text-white">
+                  <AnimatedCounter value={products.length} />
+                </p>
+              </div>
+
+              {/* Lượt truy cập hôm nay - từ Redis */}
+              <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center group hover:border-purple-500/50 transition-colors">
+                <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <EyeClosed className="w-8 h-8 text-purple-500" />
+                </div>
+                <h3 className="text-4xl font-bold text-white mb-2">
+                  <AnimatedCounter value={todayStats.visits} />
+                </h3>
+                <p className="text-slate-400 font-medium">
+                  Lượt Truy Cập Hôm Nay
+                </p>
+              </div>
+
+              {/* Thiết bị */}
+              <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center">
+                <div className="flex gap-4 w-full justify-around mt-4">
+                  <div className="flex flex-col items-center">
+                    <Smartphone className="w-8 h-8 text-pink-500 mb-2" />
+                    <h4 className="text-2xl font-bold text-white">
+                      <AnimatedCounter value={analytics.mobileViews} />
+                    </h4>
+                    <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">
+                      Mobile
+                    </p>
+                  </div>
+                  <div className="w-px bg-white/10 mx-2"></div>
+                  <div className="flex flex-col items-center">
+                    <Monitor className="w-8 h-8 text-cyan-500 mb-2" />
+                    <h4 className="text-2xl font-bold text-white">
+                      <AnimatedCounter value={analytics.pcViews} />
+                    </h4>
+                    <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">
+                      Desktop
+                    </p>
+                  </div>
+                </div>
+                <p className="text-slate-400 font-medium mt-6">
+                  Thiết Bị Truy Cập
+                </p>
+              </div>
+
+              {/* Click mua hàng hôm nay - từ Redis */}
+              <div className="bg-slate-950 p-8 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center text-center group hover:border-emerald-500/50 transition-colors">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <span className="text-2xl">🛒</span>
+                </div>
+                <h3 className="text-4xl font-bold text-emerald-400 mb-2">
+                  <AnimatedCounter value={todayStats.clicks} />
+                </h3>
+                <p className="text-slate-400 font-medium">
+                  Click Mua Hàng Hôm Nay
+                </p>
+              </div>
             </div>
 
             {/* Lịch sử truy cập */}
-            <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 mt-8 md:col-span-full">
+            <div className="hidden bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 mt-8 md:col-span-full">
               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <LayoutDashboard className="w-5 h-5 text-amber-500" />
                 Lịch Sử Truy Cập Mới Nhất
@@ -732,6 +745,82 @@ export default function Admin() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+            {/* BẢNG IP CLICK VÀ VISIT HÔM NAY */}
+            <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 mt-6 md:col-span-full">
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <LayoutDashboard className="w-5 h-5 text-amber-500" />
+                Danh Sách IP Hôm Nay
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-2 gap-6">
+                {/* Cột IP vào web */}
+                <div>
+                  <h3 className="text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2">
+                    <EyeClosed className="w-4 h-4" />
+                    IP Vào Web ({ipLists.visitIps.length})
+                  </h3>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {ipLists.visitIps.length === 0 ? (
+                      <p className="text-slate-500 italic text-sm">
+                        Chưa có IP nào
+                      </p>
+                    ) : (
+                      ipLists.visitIps.map((ip, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-3 bg-slate-900 px-4 py-2.5 rounded-lg border border-white/5"
+                        >
+                          <span className="text-xs text-slate-500 w-5">
+                            {idx + 1}
+                          </span>
+                          <span className="font-mono text-sm text-white">
+                            {ip}
+                          </span>
+                          {ipLists.clickIps.includes(ip) && (
+                            <span className="ml-auto text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">
+                              Đã click 🛒
+                            </span>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Cột IP click sản phẩm */}
+                <div>
+                  <h3 className="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+                    <span>🛒</span>
+                    IP Click Sản Phẩm ({ipLists.clickIps.length})
+                  </h3>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {ipLists.clickIps.length === 0 ? (
+                      <p className="text-slate-500 italic text-sm">
+                        Chưa có IP nào
+                      </p>
+                    ) : (
+                      ipLists.clickIps.map((ip, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-3 bg-slate-900 px-4 py-2.5 rounded-lg border border-white/5"
+                        >
+                          <span className="text-xs text-slate-500 w-5">
+                            {idx + 1}
+                          </span>
+                          <span className="font-mono text-sm text-white">
+                            {ip}
+                          </span>
+                          {ipLists.visitIps.includes(ip) && (
+                            <span className="ml-auto text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full">
+                              Đã vào web 👁️
+                            </span>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>
