@@ -46,9 +46,15 @@ import {
   getAnalyticsSumary,
   getRecentVisits,
 } from "../services/trackingService";
+import {
+  getActiveLockOption,
+  updateActiveLockOption,
+} from "../services/configService";
 
 export default function Admin() {
   const navigate = useNavigate();
+  const [currentLockOption, setCurrentLockOption] = useState<number>(1);
+  const [isOptionLoading, setIsOptionLoading] = useState(false);
   const [analytics, setAnalytics] = useState({
     totalViews: 0,
     mobileViews: 0,
@@ -116,6 +122,26 @@ export default function Admin() {
     setTimeout(() => {
       setToast(null);
     }, 3000); // 3000ms là 3 giây (đừng để 300000 vì nó sẽ lâu tắt)
+  };
+  useEffect(() => {
+    const fetchOption = async () => {
+      const opt = await getActiveLockOption();
+      setCurrentLockOption(opt);
+    };
+    fetchOption();
+  }, [activeTab]);
+
+  // Hàm xử lý khi bấm đổi Option
+  const handleSaveLockOption = async (optionNum: number) => {
+    setIsOptionLoading(true);
+    const success = await updateActiveLockOption(optionNum);
+    if (success) {
+      setCurrentLockOption(optionNum);
+      triggerToast(`Đã đổi sang Option ${optionNum}!`, "success");
+    } else {
+      triggerToast("Có lỗi xảy ra khi lưu trên Firebase!", "error");
+    }
+    setIsOptionLoading(false);
   };
 
   useEffect(() => {
@@ -394,7 +420,7 @@ export default function Admin() {
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-4 right-4 px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 duration-300 ${
+          className={`fixed top-[10%] right-[10%] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 duration-300 ${
             toast.type === "success"
               ? "bg-emerald-500 text-white"
               : toast.type === "error"
@@ -497,6 +523,69 @@ export default function Admin() {
             animate={{ opacity: 1, y: 0 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
+            {/* Khối cấu hình tùy chọn khóa */}
+            <div className="bg-slate-950 p-6 rounded-2xl border border-white/5 md:col-span-full mb-6">
+              <h2 className="text-lg font-bold text-amber-500 mb-2">
+                ⚙️ Cấu hình Chế Độ Khóa Shopee (Lock Mode Options)
+              </h2>
+              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                Tùy chỉnh tính năng hiển thị popup sản phẩm Shopee để ép/giới
+                thiệu người dùng click ủng hộ bạn trước khi xem phim.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Nút chọn Option 1 */}
+                <button
+                  type="button"
+                  onClick={() => handleSaveLockOption(1)}
+                  disabled={isOptionLoading}
+                  className={`p-5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                    currentLockOption === 1
+                      ? "border-amber-500 bg-amber-500/[0.04]"
+                      : "border-white/5 bg-slate-900 hover:border-white/10"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className={`w-3 h-3 rounded-full ${currentLockOption === 1 ? "bg-amber-500 animate-pulse" : "bg-slate-600"}`}
+                    />
+                    <span className="font-bold text-white text-sm">
+                      Option 1: Khóa khi xem tập phim (Mặc định)
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Người dùng truy cập xem bình thường. Khi click vào các tập
+                    phim mới nhất / premium, họ phải bấm xem sản phẩm Shopee bất
+                    kỳ bên dưới, đợi hết 7 giây đếm ngược để mở khóa xem phim.
+                  </p>
+                </button>
+
+                {/* Nút chọn Option 2 */}
+                <button
+                  type="button"
+                  onClick={() => handleSaveLockOption(2)}
+                  disabled={isOptionLoading}
+                  className={`p-5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                    currentLockOption === 2
+                      ? "border-amber-500 bg-amber-500/[0.04]"
+                      : "border-white/5 bg-slate-900 hover:border-white/10"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className={`w-3 h-3 rounded-full ${currentLockOption === 2 ? "bg-amber-500 animate-pulse" : "bg-slate-600"}`}
+                    />
+                    <span className="font-bold text-white text-sm">
+                      Option 2: Khóa toàn trang ngay khi vừa vào trang web
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Chặn toàn bộ màn hình ngay khi vừa mở web. Họ bắt buộc phải
+                    bấm xem sản phẩm Shopee, đợi 7 giây đếm ngược để mở khóa
+                    trang chủ thì mới có thể thao tác chọn phim.
+                  </p>
+                </button>
+              </div>
+            </div>
             {/* Thẻ Thống Kê 1: Gồm bao nhiêu Series Phim */}
             <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
               <div className="w-14 h-14 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center mb-4 border border-blue-500/20">

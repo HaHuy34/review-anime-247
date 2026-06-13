@@ -30,20 +30,22 @@ function UnlockModal({
   onUnlock,
   onClose,
   handleProductClick,
+  isOption2 = false,
 }: {
   theme: "dark" | "light";
   products: any[];
   onUnlock: () => void;
   onClose: () => void;
   handleProductClick: (p: any) => void;
+  isOption2?: boolean;
 }) {
-  const [skipTimer, setSkipTimer] = useState(30);
+  const [skipTimer, setSkipTimer] = useState(isOption2 ? 999999 : 30);
   const [unlockTimer, setUnlockTimer] = useState<number | null>(null);
 
   useEffect(() => {
     let int: any;
     if (unlockTimer === null) {
-      if (skipTimer > 0) {
+      if (skipTimer > 0 && !isOption2) {
         int = setInterval(() => {
           setSkipTimer((prev) => Math.max(0, prev - 1));
         }, 1000);
@@ -60,7 +62,7 @@ function UnlockModal({
       }, 1000);
     }
     return () => clearInterval(int);
-  }, [unlockTimer, skipTimer, onUnlock]);
+  }, [unlockTimer, skipTimer, onUnlock, isOption2]);
 
   const onProductClick = (p: any) => {
     handleProductClick(p);
@@ -72,12 +74,14 @@ function UnlockModal({
       <div
         className={`relative w-full max-w-lg rounded-3xl p-6 shadow-2xl border flex flex-col items-center text-center ${theme === "dark" ? "bg-[#13131c] border-white/10 text-white" : "bg-white border-black/10 text-slate-800"}`}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 p-2 rounded-full cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-all z-10"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {!isOption2 && (
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-2 p-2 rounded-full cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-all z-10"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
 
         <h2 className="font-display text-xl sm:text-2xl font-black mb-2 text-amber-500">
           MỞ KHÓA TOÀN BỘ TẬP MỚI NHẤT!
@@ -127,25 +131,30 @@ function UnlockModal({
               ))}
             </div>
 
-            <div
-              className={`border-t w-full pt-4 ${theme === "dark" ? "border-white/10" : "border-black/5"}`}
-            >
-              {skipTimer > 0 ? (
-                <p className="text-xs opacity-60 font-medium">
-                  Hoặc đợi{" "}
-                  <span className="text-amber-500 font-bold">{skipTimer}s</span>{" "}
-                  để bỏ qua quảng cáo.
-                </p>
-              ) : (
-                <button
-                  onClick={onUnlock}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer
-                    ${theme === "dark" ? "bg-white/10 hover:bg-white/20 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-800"}`}
-                >
-                  Bỏ qua &amp; Xem ngay
-                </button>
-              )}
-            </div>
+            {/* 👇 CHỈ HIỆN NÚT SKIP KHI LÀ OPTION 1 */}
+            {!isOption2 && (
+              <div
+                className={`border-t w-full pt-4 ${theme === "dark" ? "border-white/10" : "border-black/5"}`}
+              >
+                {skipTimer > 0 ? (
+                  <p className="text-xs opacity-60 font-medium">
+                    Hoặc đợi{" "}
+                    <span className="text-amber-500 font-bold">
+                      {skipTimer}s
+                    </span>{" "}
+                    để bỏ qua quảng cáo.
+                  </p>
+                ) : (
+                  <button
+                    onClick={onUnlock}
+                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer
+                      ${theme === "dark" ? "bg-white/10 hover:bg-white/20 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-800"}`}
+                  >
+                    Bỏ qua &amp; Xem ngay
+                  </button>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -171,6 +180,18 @@ export default function App() {
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState<boolean>(false);
   const dragonBallRef = useRef<HTMLDivElement | null>(null);
+  const [lockOption, setLockOption] = useState<number>(1);
+  const [isLockOptionLoaded, setIsLockOptionLoaded] = useState(false);
+  useEffect(() => {
+    // Chờ load xong option và products mới kích hoạt
+    if (!isLockOptionLoaded || isLoadingProducts) return;
+    if (lockOption !== 2) return;
+
+    const isUnlocked = checkUnlock();
+    if (!isUnlocked) {
+      setUnlockTargetEpIndex(-998); // -998 = Option 2 trigger
+    }
+  }, [isLockOptionLoaded, lockOption, isLoadingProducts]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -289,6 +310,12 @@ export default function App() {
     if (savedTheme) {
       setTheme(savedTheme);
     }
+    import("@/src/services/configService").then(({ getActiveLockOption }) => {
+      getActiveLockOption().then((opt) => {
+        setLockOption(opt);
+        setIsLockOptionLoaded(true);
+      });
+    });
   }, []);
 
   useEffect(() => {
@@ -385,6 +412,10 @@ export default function App() {
     localStorage.setItem("unlocked_shopee_date", new Date().toDateString());
 
     triggerToast("🎉 Đã mở khóa toàn bộ nội dung!", "success");
+    if (unlockTargetEpIndex === -998) {
+      setUnlockTargetEpIndex(null);
+      return; // Chỉ đóng popup, ở lại trang chủ bình thường
+    }
 
     // Nếu là mở từ timeline (series)
     if (unlockTargetEpIndex === -999 && selectedMovie) {
@@ -1054,6 +1085,7 @@ ${
           onUnlock={handleUnlockSuccess}
           onClose={() => setUnlockTargetEpIndex(null)}
           handleProductClick={handleProductClick}
+          isOption2={unlockTargetEpIndex === -998}
         />
       )}
 
