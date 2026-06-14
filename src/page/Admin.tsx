@@ -108,10 +108,10 @@ export default function Admin() {
   const [recentVisits, setRecentVisits] = useState<any[]>([]);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [ipLists, setIpLists] = useState<{
-    visitIps: string[];
+    visitIpsWithDevice: { ip: string; device: string }[];
     clickIps: string[];
   }>({
-    visitIps: [],
+    visitIpsWithDevice: [],
     clickIps: [],
   });
 
@@ -228,7 +228,7 @@ export default function Admin() {
                 clicks: statsData.clicks,
               });
               setIpLists({
-                visitIps: statsData.visitIps || [],
+                visitIpsWithDevice: statsData.visitIpsWithDevice || [],
                 clickIps: statsData.clickIps || [],
               });
               setChart7Days(statsData.chart7Days || []);
@@ -820,7 +820,7 @@ export default function Admin() {
                   className={`cursor-pointer flex items-center gap-2 px-5 py-2 rounded-md text-sm font-medium transition-all ${ipTab === "visit" ? "bg-purple-500 text-white shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
                 >
                   <EyeClosed className="w-4 h-4" />
-                  Vào Web ({ipLists.visitIps.length})
+                  Vào Web ({ipLists.visitIpsWithDevice.length})
                 </button>
                 <button
                   onClick={() => setIpTab("click")}
@@ -831,14 +831,15 @@ export default function Admin() {
               </div>
 
               {/* Mobile: hiện theo tab */}
+              {/* Mobile: hiện theo tab */}
               <div className="md:hidden space-y-2 max-h-72 overflow-y-auto">
                 {ipTab === "visit" ? (
-                  ipLists.visitIps.length === 0 ? (
+                  ipLists.visitIpsWithDevice.length === 0 ? (
                     <p className="text-slate-500 italic text-sm">
                       Chưa có IP nào
                     </p>
                   ) : (
-                    ipLists.visitIps.map((ip, idx) => (
+                    ipLists.visitIpsWithDevice.map((item, idx) => (
                       <div
                         key={idx}
                         className="flex items-center gap-3 bg-slate-900 px-4 py-2.5 rounded-lg border border-white/5"
@@ -847,9 +848,14 @@ export default function Admin() {
                           {idx + 1}
                         </span>
                         <span className="font-mono text-sm text-white">
-                          {ip}
+                          {item.ip}
                         </span>
-                        {ipLists.clickIps.includes(ip) && (
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${item.device === "Mobile" ? "bg-pink-500/10 text-pink-400" : "bg-cyan-500/10 text-cyan-400"}`}
+                        >
+                          {item.device === "Mobile" ? "📱" : "🖥️"}
+                        </span>
+                        {ipLists.clickIps.includes(item.ip) && (
                           <span className="ml-auto text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">
                             Đã click 🛒
                           </span>
@@ -871,8 +877,8 @@ export default function Admin() {
                         {idx + 1}
                       </span>
                       <span className="font-mono text-sm text-white">{ip}</span>
-                      {ipLists.visitIps.includes(ip) && (
-                        <span className="ml-auto text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full cursor-pointer">
+                      {ipLists.visitIpsWithDevice.some((v) => v.ip === ip) && (
+                        <span className="ml-auto text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full">
                           Đã vào web 👁️
                         </span>
                       )}
@@ -886,15 +892,15 @@ export default function Admin() {
                 <div>
                   <h3 className="text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2">
                     <EyeClosed className="w-4 h-4" />
-                    IP Vào Web ({ipLists.visitIps.length})
+                    IP Vào Web ({ipLists.visitIpsWithDevice.length})
                   </h3>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {ipLists.visitIps.length === 0 ? (
+                    {ipLists.visitIpsWithDevice.length === 0 ? (
                       <p className="text-slate-500 italic text-sm">
                         Chưa có IP nào
                       </p>
                     ) : (
-                      ipLists.visitIps.map((ip, idx) => (
+                      ipLists.visitIpsWithDevice.map((item, idx) => (
                         <div
                           key={idx}
                           className="flex items-center gap-3 bg-slate-900 px-4 py-2.5 rounded-lg border border-white/5"
@@ -903,9 +909,16 @@ export default function Admin() {
                             {idx + 1}
                           </span>
                           <span className="font-mono text-sm text-white">
-                            {ip}
+                            {item.ip}
                           </span>
-                          {ipLists.clickIps.includes(ip) && (
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full ${item.device === "Mobile" ? "bg-pink-500/10 text-pink-400" : "bg-cyan-500/10 text-cyan-400"}`}
+                          >
+                            {item.device === "Mobile"
+                              ? "📱 Mobile"
+                              : "🖥️ Desktop"}
+                          </span>
+                          {ipLists.clickIps.includes(item.ip) && (
                             <span className="ml-auto text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">
                               Đã click 🛒
                             </span>
@@ -938,7 +951,9 @@ export default function Admin() {
                           <span className="font-mono text-sm text-white">
                             {ip}
                           </span>
-                          {ipLists.visitIps.includes(ip) && (
+                          {ipLists.visitIpsWithDevice.some(
+                            (v) => v.ip === ip,
+                          ) && (
                             <span className="ml-auto text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full">
                               Đã vào web 👁️
                             </span>

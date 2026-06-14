@@ -36,10 +36,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .json({ ok: true, skipped: true, reason: "Already notified today" });
     }
 
-    await kv.set(dedupKey, 1, { ex: 86400 });
-    await kv.incr(`stats:visit:${today}`);
-
     const userAgent = (req.headers["user-agent"] as string) || "unknown";
+
+    const isMobile = /Mobile|Android|iPhone|iPad/i.test(userAgent);
+    await kv.set(dedupKey, isMobile ? "mobile" : "desktop", { ex: 86400 });
+    await kv.incr(`stats:visit:${today}`);
 
     let geo: any = null;
 

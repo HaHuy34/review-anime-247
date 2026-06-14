@@ -52,7 +52,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     kv.keys(`visit:*:${today}`),
     kv.keys(`click:*:${today}`),
   ]);
-  const visitIps = visitKeys.map((k) => k.split(":")[1]);
+
+  const visitIpsWithDevice = await Promise.all(
+    visitKeys.map(async (k) => {
+      const device = await kv.get<string>(k);
+      return {
+        ip: k.split(":")[1],
+        device: device === "mobile" ? "Mobile" : "Desktop",
+      };
+    }),
+  );
+
   const clickIps = clickKeys.map((k) => k.split(":")[1]);
 
   return res.status(200).json({
