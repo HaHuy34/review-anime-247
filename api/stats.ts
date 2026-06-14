@@ -73,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     yesterday: dateYesterday,
     visitsYesterday: visitsYesterday || 0,
     clicksYesterday: clicksYesterday || 0,
-    visitIps,
+    visitIpsWithDevice,
     clickIps,
     chart7Days,
   });
