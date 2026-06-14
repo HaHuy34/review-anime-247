@@ -738,7 +738,7 @@ export default function App() {
                   </div>
                 </div>
                 {isMobile && (
-                  <div className="mt-6 flex flex-col items-center justify-center relative z-20">
+                  <div className="mt-3 flex flex-col items-center justify-center relative z-20">
                     {/* Divider connector */}
                     <div className="w-px h-6 bg-amber-500/30 border-dashed border-l mb-2" />
 

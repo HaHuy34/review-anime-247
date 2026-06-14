@@ -116,6 +116,14 @@ export default function Admin() {
     clickIps: [],
   });
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -146,6 +154,11 @@ export default function Admin() {
   const [productLink, setProductLink] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [totalAllEpisodes, setTotalAllEpisodes] = useState(0);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const [toast, setToast] = useState<{
     message: string;
@@ -369,31 +382,41 @@ export default function Admin() {
   };
 
   const handleDeleteEpisode = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa tập phim này?")) return;
-    setIsLoading(true);
-    try {
-      await deleteEpisode(id);
-      triggerToast("Đã xóa tập phim!", "success");
-      loadEpisodes(selectedSeries);
-    } catch (error) {
-      console.error("Error deleting", error);
-      triggerToast("Có lỗi xảy ra khi xóa!", "error");
-      setIsLoading(false);
-    }
+    setConfirmModal({
+      isOpen: true,
+      message:
+        "Bạn có chắc chắn muốn xóa tập phim này? Hành động này không thể hoàn tác.",
+      onConfirm: async () => {
+        setIsLoading(true);
+        try {
+          await deleteEpisode(id);
+          triggerToast("Đã xóa tập phim!", "success");
+          loadEpisodes(selectedSeries);
+        } catch {
+          triggerToast("Có lỗi xảy ra khi xóa!", "error");
+          setIsLoading(false);
+        }
+      },
+    });
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
-    setIsLoading(true);
-    try {
-      await deleteProduct(id);
-      triggerToast("Đã xóa sản phẩm!", "success");
-      loadProducts();
-    } catch (error) {
-      console.error("Error deleting product", error);
-      triggerToast("Có lỗi xảy ra khi xóa!", "error");
-      setIsLoading(false);
-    }
+    setConfirmModal({
+      isOpen: true,
+      message:
+        "Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn tác.",
+      onConfirm: async () => {
+        setIsLoading(true);
+        try {
+          await deleteProduct(id);
+          triggerToast("Đã xóa sản phẩm!", "success");
+          loadProducts();
+        } catch {
+          triggerToast("Có lỗi xảy ra khi xóa!", "error");
+          setIsLoading(false);
+        }
+      },
+    });
   };
 
   const resetForm = () => {
@@ -433,7 +456,6 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-[#050508] text-slate-300 py-10 px-4 md:px-8 font-sans relative">
-      {/* Toast Notification */}
       {toast && (
         <div
           className={`fixed top-[10%] right-[10%] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 duration-300 ${
@@ -455,9 +477,64 @@ export default function Admin() {
         </div>
       )}
 
+      {/* ✅ Confirm Modal */}
+      <AnimatePresence>
+        {confirmModal?.isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+            onClick={() => setConfirmModal(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-400" />
+                </div>
+                <h3 className="text-white font-bold text-lg">Xác nhận xóa</h3>
+              </div>
+              <p className="text-slate-400 text-sm mb-6">
+                {confirmModal.message}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmModal(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-all font-medium"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={() => {
+                    confirmModal.onConfirm();
+                    setConfirmModal(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-white font-bold transition-all"
+                >
+                  Xóa
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5">
+        <div
+          className={`flex flex-col md:flex-row md:items-start md:justify-between gap-4 bg-slate-950 p-6 rounded-2xl shadow-xl border transition-all duration-300 sticky top-0 z-50 ${
+            isScrolled
+              ? "backdrop-blur-md bg-slate-950/80 shadow-2xl shadow-black/50 border-white/10"
+              : "border-white/5"
+          }`}
+        >
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
               <Film className="w-8 h-8 text-amber-500" />
@@ -472,39 +549,62 @@ export default function Admin() {
             </Link>
           </div>
 
-          <div className="flex w-full md:w-auto justify-between md:justify-start bg-slate-900 p-1 rounded-lg border border-white/10 mt-2 md:mt-0 mb-[0px] md:mb-0 items-center self-start md:self-auto">
+          {/* Tab navigation */}
+          <div className="relative flex w-full md:w-auto justify-between md:justify-start bg-slate-900 p-1 rounded-lg border border-white/10 mt-2 md:mt-0 mb-[0px] md:mb-0 items-center self-start md:self-auto">
+            {/* Sliding background */}
+            <motion.div
+              className="absolute top-1 bottom-1 w-[calc(33.333%-3px)] rounded-md bg-amber-500 left-1"
+              animate={{
+                x:
+                  activeTab === "overview"
+                    ? 0
+                    : activeTab === "episodes"
+                      ? "calc(100% + 2px)"
+                      : "calc(200% + 4px)",
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            />
+
             <button
               onClick={() => {
                 setActiveTab("overview");
                 resetForm();
                 setSearchQuery("");
               }}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-all ${activeTab === "overview" ? "bg-amber-500 text-slate-900 shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+              className={`relative flex-1 justify-center z-10 flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-colors duration-200 ${activeTab === "overview" ? "text-slate-900" : "text-slate-400 hover:text-white"}`}
             >
               <BarChart className="w-4 h-4" />
-              <span className="hidden md:inline">Tổng Quan</span>
+              <span className="hidden md:inline whitespace-nowrap">
+                Trang chủ
+              </span>
             </button>
+
             <button
               onClick={() => {
                 setActiveTab("episodes");
                 resetForm();
                 setSearchQuery("");
               }}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-all ${activeTab === "episodes" ? "bg-amber-500 text-slate-900 shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+              className={`relative z-10 flex-1 justify-center flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-colors duration-200 ${activeTab === "episodes" ? "text-slate-900" : "text-slate-400 hover:text-white"}`}
             >
               <Film className="w-4 h-4" />
-              <span className="hidden md:inline">Tập Phim</span>
+              <span className="hidden md:inline whitespace-nowrap">
+                Tập Phim
+              </span>
             </button>
+
             <button
               onClick={() => {
                 setActiveTab("products");
                 resetForm();
                 setSearchQuery("");
               }}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-all ${activeTab === "products" ? "bg-amber-500 text-slate-900 shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+              className={`relative z-10 flex-1 justify-center flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-colors duration-200 ${activeTab === "products" ? "text-slate-900" : "text-slate-400 hover:text-white"}`}
             >
               <Package className="w-4 h-4" />
-              <span className="hidden md:inline">Sản Phẩm</span>
+              <span className="hidden md:inline whitespace-nowrap">
+                Sản Phẩm
+              </span>
             </button>
           </div>
         </div>
@@ -753,17 +853,33 @@ export default function Admin() {
               </h2>
 
               {/* Tab switcher - chỉ hiện trên mobile */}
-              <div className="md:hidden flex bg-slate-900 p-1 rounded-lg border border-white/10 w-fit mb-4">
+              <div className="md:hidden relative flex bg-slate-900 p-1 rounded-lg border border-white/10 w-full mb-4">
+                {/* Sliding background */}
+                <motion.div
+                  className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-md ${ipTab === "visit" ? "bg-purple-500" : "bg-emerald-500"}`}
+                  animate={{ x: ipTab === "visit" ? 0 : "100%" }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+
                 <button
                   onClick={() => setIpTab("visit")}
-                  className={`cursor-pointer flex items-center gap-2 px-5 py-2 rounded-md text-sm font-medium transition-all ${ipTab === "visit" ? "bg-purple-500 text-white shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 px-5 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                    ipTab === "visit"
+                      ? "text-white"
+                      : "text-slate-400 hover:text-white"
+                  }`}
                 >
                   <EyeClosed className="w-4 h-4" />
                   Vào Web ({ipLists.visitIpsWithDevice.length})
                 </button>
+
                 <button
                   onClick={() => setIpTab("click")}
-                  className={`cursor-pointer flex items-center gap-2 px-5 py-2 rounded-md text-sm font-medium transition-all ${ipTab === "click" ? "bg-emerald-500 text-white shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 px-5 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                    ipTab === "click"
+                      ? "text-white"
+                      : "text-slate-400 hover:text-white"
+                  }`}
                 >
                   🛒 Click ({ipLists.clickIps.length})
                 </button>
