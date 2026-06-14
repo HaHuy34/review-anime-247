@@ -49,6 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     await kv.set(dedupKey, 1, { ex: 86400 });
+    await kv.incr(`stats:click:${today}`);
 
     const embed = {
       title: "🛍️ PRODUCT CLICK",

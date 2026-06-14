@@ -221,7 +221,7 @@ export default function Admin() {
               `${baseUrl}/api/stats?password=${import.meta.env.VITE_ADMIN_PASSWORD}`,
             );
             const statsData = await statsRes.json();
-            console.log(statsData, "statsData");
+
             if (statsData.ok) {
               setTodayStats({
                 visits: statsData.visits,

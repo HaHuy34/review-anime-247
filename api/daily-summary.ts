@@ -29,6 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const visits = (await kv.get<number>(`stats:visit:${date}`)) || 0;
   const clicks = (await kv.get<number>(`stats:click:${date}`)) || 0;
+  console.log(clicks, "click");
 
   const webhookUrl = process.env.DISCORD_WEBHOOK_SUMMARY;
   if (!webhookUrl) {
