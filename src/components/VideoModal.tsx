@@ -34,17 +34,15 @@ const getEmbedUrl = (url: string, iframeId: string) => {
 
   // Streamtape
   if (url.includes("streamtape.com")) {
-    // Input: https://streamtape.com/v/VIDEO_ID/ hoặc /e/VIDEO_ID/
     const match = url.match(/streamtape\.com\/(?:v|e)\/([^/]+)/);
     if (match?.[1]) {
       return `https://streamtape.com/e/${match[1]}/`;
     }
     return url;
   }
+
   // Odysee
   if (url.includes("odysee.com")) {
-    // Input: https://odysee.com/@channel/video-slug
-    // hoặc đã là embed: https://odysee.com/$/embed/video-slug
     if (url.includes("/$/embed/")) return url;
     const match = url.match(/odysee\.com\/([^?]+)/);
     if (match?.[1]) {
@@ -61,13 +59,11 @@ export default function VideoModal({
   onClose,
   triggerNotification,
 }: VideoModalProps) {
-  // Filter out episodes that don't have valid source links representation
   const validEpisodes = series.episodes.filter(
     (ep) => ep.src && ep.src.trim() !== "",
   );
 
   const [currentIndex, setCurrentIndex] = useState<number>(initialEpisodeIndex);
-  // const [showNav, setShowNav] = useState<boolean>(true);
   const [showSuggestion, setShowSuggestion] = useState<boolean>(false);
   const [dismissedSuggestion, setDismissedSuggestion] = useState<{
     [key: string]: boolean;
@@ -76,27 +72,30 @@ export default function VideoModal({
     [key: string]: boolean;
   }>({});
 
-  // const navTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // --- Odysee slow load ---
+  const [slowLoadWarning, setSlowLoadWarning] = useState(false);
+  const slowLoadTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const durationsRef = useRef<{ [key: string]: number }>({});
 
-  // const resetNavVisibilityTimer = () => {
-  //   setShowNav(true);
-  //   if (navTimeoutRef.current) {
-  //     clearTimeout(navTimeoutRef.current);
-  //   }
-  //   navTimeoutRef.current = setTimeout(() => {
-  //     setShowNav(false);
-  //   }, 3000);
-  // };
-
-  // useEffect(() => {
-  //   resetNavVisibilityTimer();
-  //   return () => {
-  //     if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
-  //   };
-  // }, [currentIndex]);
-
   const currentEpisodeDetails = validEpisodes[currentIndex];
+
+  // Odysee timeout: reset mỗi khi đổi tập
+  useEffect(() => {
+    setSlowLoadWarning(false);
+    if (slowLoadTimerRef.current) clearTimeout(slowLoadTimerRef.current);
+
+    const isOdysee = currentEpisodeDetails?.src?.includes("odysee.com");
+    if (isOdysee) {
+      slowLoadTimerRef.current = setTimeout(() => {
+        setSlowLoadWarning(true);
+      }, 9000); // 9  s giây chưa load xong → cảnh báo
+    }
+
+    return () => {
+      if (slowLoadTimerRef.current) clearTimeout(slowLoadTimerRef.current);
+    };
+  }, [currentIndex, currentEpisodeDetails?.src]);
 
   useEffect(() => {
     const handleDailymotionMessages = (event: MessageEvent) => {
@@ -200,12 +199,7 @@ export default function VideoModal({
         onClick={onClose}
       />
 
-      <div
-        className="relative w-full max-w-4xl bg-slate-950 border border-slate-800/80 rounded-2xl overflow-hidden shadow-2xl z-10 transition-transform duration-300 scale-100 flex flex-col"
-        // onMouseMove={resetNavVisibilityTimer}
-        // onClick={resetNavVisibilityTimer}
-        // onTouchStart={resetNavVisibilityTimer}
-      >
+      <div className="relative w-full max-w-4xl bg-slate-950 border border-slate-800/80 rounded-2xl overflow-hidden shadow-2xl z-10 transition-transform duration-300 scale-100 flex flex-col">
         <div className="p-4 bg-slate-900/60 border-b border-slate-850 flex items-center justify-between text-left">
           <div className="flex items-center gap-2">
             <div className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg border border-amber-500/25">
@@ -240,7 +234,6 @@ export default function VideoModal({
             {validEpisodes.map((ep: any, index: any) => {
               const iframeId = `dm-iframe-${index}`;
               const isCurrent = index === currentIndex;
-
               const srcUrl = isCurrent
                 ? getEmbedUrl(ep.src, iframeId)
                 : "about:blank";
@@ -255,27 +248,25 @@ export default function VideoModal({
                       id={iframeId}
                       src={srcUrl}
                       className={`
-    border-0 bg-black
-    absolute inset-0
-
-    ${
-      ep.src?.includes("drive.google.com")
-        ? `
-          w-full
-          h-full
-
-          sm:-top-[70px]
-          sm:h-[calc(100%+125px)]
-        `
-        : `
-          w-full
-          h-full
-        `
-    }
-  `}
+                        border-0 bg-black absolute inset-0
+                        ${
+                          ep.src?.includes("drive.google.com")
+                            ? `w-full h-full sm:-top-[70px] sm:h-[calc(100%+125px)]`
+                            : `w-full h-full`
+                        }
+                      `}
                       allow="autoplay; fullscreen; picture-in-picture"
                       allowFullScreen
                       title={`${series.title} - ${ep.name}`}
+                      onLoad={() => {
+                        // Load xong trước timeout → xoá cảnh báo
+                        const isOdysee = ep.src?.includes("odysee.com");
+                        if (!isOdysee) {
+                          setSlowLoadWarning(false);
+                          if (slowLoadTimerRef.current)
+                            clearTimeout(slowLoadTimerRef.current);
+                        }
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full bg-slate-950 flex items-center justify-center">
@@ -287,30 +278,23 @@ export default function VideoModal({
             })}
           </div>
 
-          {/* {showNav && (
-            <>
-              {currentIndex > 0 && (
-                <button
-                  onClick={handlePrev}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-slate-900/80 hover:bg-amber-500 hover:text-slate-950 text-slate-300 border border-slate-800/80 flex items-center justify-center transition-all z-20 cursor-pointer shadow-lg hover:scale-105 active:scale-95"
-                  id="modal-prev-btn"
-                >
-                  <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
-                </button>
-              )}
+          {/* Odysee slow load warning */}
+          {slowLoadWarning && (
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm px-4 py-3 bg-slate-950/95 border border-amber-500/30 rounded-xl z-30 shadow-xl flex items-center justify-center gap-3">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+              <p className="text-xs text-center text-amber-300 font-semibold flex-1 leading-relaxed">
+                ⏳ Video đang tải chậm, vui lòng chờ thêm 15-20s
+              </p>
+              <button
+                onClick={() => setSlowLoadWarning(false)}
+                className="text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
 
-              {currentIndex < validEpisodes.length - 1 && (
-                <button
-                  onClick={handleNext}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-slate-900/80 hover:bg-amber-500 hover:text-slate-950 text-slate-300 border border-slate-800/80 flex items-center justify-center transition-all z-20 cursor-pointer shadow-lg hover:scale-105 active:scale-95"
-                  id="modal-next-btn"
-                >
-                  <ChevronRight className="w-6 h-6 stroke-[2.5]" />
-                </button>
-              )}
-            </>
-          )} */}
-
+          {/* Dailymotion next episode suggestion */}
           {showSuggestion && (
             <div className="absolute bottom-6 right-6 p-4 sm:p-5 bg-slate-950/95 border border-slate-800 rounded-xl max-w-xs text-left shadow-2xl z-30 animate-pulse">
               <div className="flex items-start gap-2.5 mb-2.5">
