@@ -91,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         : "";
 
     const embed = {
-      title: "🔥 PHÁT HIỆN LƯỢT TRUY CẬP WEBSITE MỚI (VERCEL)",
+      title: "🔥 PHÁT HIỆN LƯỢT TRUY CẬP WEBSITE",
       color: 16742912,
       fields: [
         { name: "🌍 Quốc gia", value: geo.country || "Không rõ", inline: true },
