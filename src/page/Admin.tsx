@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   Monitor,
   Search,
+  ShoppingBag,
   Smartphone,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -471,7 +472,7 @@ export default function Admin() {
             </Link>
           </div>
 
-          <div className="flex bg-slate-900 p-1 rounded-lg border border-white/10 mt-2 md:mt-0 items-center self-start md:self-auto">
+          <div className="flex w-full md:w-auto justify-between md:justify-start bg-slate-900 p-1 rounded-lg border border-white/10 mt-2 md:mt-0 mb-[0px] md:mb-0 items-center self-start md:self-auto">
             <button
               onClick={() => {
                 setActiveTab("overview");
@@ -481,7 +482,7 @@ export default function Admin() {
               className={`flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-all ${activeTab === "overview" ? "bg-amber-500 text-slate-900 shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
             >
               <BarChart className="w-4 h-4" />
-              Tổng Quan
+              <span className="hidden md:inline">Tổng Quan</span>
             </button>
             <button
               onClick={() => {
@@ -492,7 +493,7 @@ export default function Admin() {
               className={`flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-all ${activeTab === "episodes" ? "bg-amber-500 text-slate-900 shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
             >
               <Film className="w-4 h-4" />
-              Tập Phim
+              <span className="hidden md:inline">Tập Phim</span>
             </button>
             <button
               onClick={() => {
@@ -503,7 +504,7 @@ export default function Admin() {
               className={`flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-all ${activeTab === "products" ? "bg-amber-500 text-slate-900 shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
             >
               <Package className="w-4 h-4" />
-              Sản Phẩm
+              <span className="hidden md:inline">Sản Phẩm</span>
             </button>
           </div>
         </div>
@@ -539,70 +540,8 @@ export default function Admin() {
             animate={{ opacity: 1, y: 0 }}
             className="grid grid-cols-1 md:grid-cols-1 gap-6"
           >
-            {/* Khối cấu hình tùy chọn khóa */}
-            <div className="bg-slate-950 p-6 rounded-2xl border border-white/5 md:col-span-full mb-6">
-              <h2 className="text-lg font-bold text-amber-500 mb-2">
-                ⚙️ Cấu hình Chế Độ Khóa Shopee (Lock Mode Options)
-              </h2>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Tùy chỉnh tính năng hiển thị popup sản phẩm Shopee để ép/giới
-                thiệu người dùng click ủng hộ bạn trước khi xem phim.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => handleSaveLockOption(1)}
-                  disabled={isOptionLoading}
-                  className={`p-5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                    currentLockOption === 1
-                      ? "border-amber-500 bg-amber-500/[0.04]"
-                      : "border-white/5 bg-slate-900 hover:border-white/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className={`w-3 h-3 rounded-full ${currentLockOption === 1 ? "bg-amber-500 animate-pulse" : "bg-slate-600"}`}
-                    />
-                    <span className="font-bold text-white text-sm">
-                      Option 1: Khóa khi xem tập phim (Mặc định)
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Người dùng truy cập xem bình thường. Khi click vào các tập
-                    phim mới nhất / premium, họ phải bấm xem sản phẩm Shopee bất
-                    kỳ bên dưới, đợi hết 7 giây đếm ngược để mở khóa xem phim.
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSaveLockOption(2)}
-                  disabled={isOptionLoading}
-                  className={`p-5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                    currentLockOption === 2
-                      ? "border-amber-500 bg-amber-500/[0.04]"
-                      : "border-white/5 bg-slate-900 hover:border-white/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className={`w-3 h-3 rounded-full ${currentLockOption === 2 ? "bg-amber-500 animate-pulse" : "bg-slate-600"}`}
-                    />
-                    <span className="font-bold text-white text-sm">
-                      Option 2: Khóa toàn trang ngay khi vừa vào trang web
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Chặn toàn bộ màn hình ngay khi vừa mở web. Họ bắt buộc phải
-                    bấm xem sản phẩm Shopee, đợi 7 giây đếm ngược để mở khóa
-                    trang chủ thì mới có thể thao tác chọn phim.
-                  </p>
-                </button>
-              </div>
-            </div>
-
             {/* BIỂU ĐỒ 7 NGÀY */}
-            <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 mt-6 md:col-span-full">
+            <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 md:col-span-full">
               <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                 <BarChart className="w-5 h-5 text-amber-500" />
                 Lượt Truy Cập 7 Ngày Gần Nhất
@@ -615,7 +554,7 @@ export default function Admin() {
                     tick={{ fill: "#94a3b8", fontSize: 12 }}
                     tickFormatter={(v) => v.slice(5)} // Hiện MM-DD
                   />
-                  <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                  <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} width={25} />
                   <Tooltip
                     contentStyle={{
                       background: "#0f172a",
@@ -645,13 +584,13 @@ export default function Admin() {
               </ResponsiveContainer>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-3 md:grid-cols-3 gap-6">
               {/* Thẻ Thống Kê 1 */}
               <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
                 <div className="w-14 h-14 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center mb-4 border border-blue-500/20">
                   <LayoutDashboard className="w-7 h-7" />
                 </div>
-                <h3 className="text-slate-400 font-medium mb-2">
+                <h3 className="hidden md:block text-slate-400 font-medium mb-2">
                   Tổng số Series Anime
                 </h3>
                 <p className="text-4xl font-bold text-white">
@@ -664,7 +603,7 @@ export default function Admin() {
                 <div className="w-14 h-14 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center mb-4 border border-amber-500/20">
                   <Film className="w-7 h-7" />
                 </div>
-                <h3 className="text-slate-400 font-medium mb-2">
+                <h3 className="hidden md:block text-slate-400 font-medium mb-2">
                   Số tập (Series đang chọn)
                 </h3>
                 <p className="text-4xl font-bold text-white">
@@ -675,9 +614,9 @@ export default function Admin() {
               {/* Thẻ Thống Kê 3 */}
               <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 flex flex-col items-center justify-center py-10">
                 <div className="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center mb-4 border border-emerald-500/20">
-                  <Package className="w-7 h-7" />
+                  <ShoppingBag className="w-7 h-7" />
                 </div>
-                <h3 className="text-slate-400 font-medium mb-2">
+                <h3 className="hidden md:block text-slate-400 font-medium mb-2">
                   Tổng số Sản Phẩm
                 </h3>
                 <p className="text-4xl font-bold text-white">
@@ -964,6 +903,67 @@ export default function Admin() {
                     )}
                   </div>
                 </div>
+              </div>
+            </div>
+            {/* Khối cấu hình tùy chọn khóa */}
+            <div className="bg-slate-950 p-6 rounded-2xl border border-white/5 md:col-span-full mb-6">
+              <h2 className="text-lg font-bold text-amber-500 mb-2">
+                ⚙️ Cấu hình Chế Độ Khóa Shopee (Lock Mode Options)
+              </h2>
+              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                Tùy chỉnh tính năng hiển thị popup sản phẩm Shopee để ép/giới
+                thiệu người dùng click ủng hộ bạn trước khi xem phim.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleSaveLockOption(1)}
+                  disabled={isOptionLoading}
+                  className={`p-5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                    currentLockOption === 1
+                      ? "border-amber-500 bg-amber-500/[0.04]"
+                      : "border-white/5 bg-slate-900 hover:border-white/10"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className={`w-3 h-3 rounded-full ${currentLockOption === 1 ? "bg-amber-500 animate-pulse" : "bg-slate-600"}`}
+                    />
+                    <span className="font-bold text-white text-sm">
+                      Option 1: Khóa khi xem tập phim (Mặc định)
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Người dùng truy cập xem bình thường. Khi click vào các tập
+                    phim mới nhất / premium, họ phải bấm xem sản phẩm Shopee bất
+                    kỳ bên dưới, đợi hết 7 giây đếm ngược để mở khóa xem phim.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSaveLockOption(2)}
+                  disabled={isOptionLoading}
+                  className={`p-5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                    currentLockOption === 2
+                      ? "border-amber-500 bg-amber-500/[0.04]"
+                      : "border-white/5 bg-slate-900 hover:border-white/10"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className={`w-3 h-3 rounded-full ${currentLockOption === 2 ? "bg-amber-500 animate-pulse" : "bg-slate-600"}`}
+                    />
+                    <span className="font-bold text-white text-sm">
+                      Option 2: Khóa toàn trang ngay khi vừa vào trang web
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Chặn toàn bộ màn hình ngay khi vừa mở web. Họ bắt buộc phải
+                    bấm xem sản phẩm Shopee, đợi 7 giây đếm ngược để mở khóa
+                    trang chủ thì mới có thể thao tác chọn phim.
+                  </p>
+                </button>
               </div>
             </div>
           </motion.div>
