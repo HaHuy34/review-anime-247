@@ -6,6 +6,24 @@ const kv = new Redis({
   token: process.env.KV_REST_API_TOKEN!,
 });
 
+const getBrowser = (ua: string) => {
+  if (/FB_IAB|FBAV/i.test(ua)) return "Facebook In-App Browser";
+  if (/EdgA?/i.test(ua)) return "Edge";
+  if (/Chrome/i.test(ua)) return "Chrome";
+  if (/Safari/i.test(ua)) return "Safari";
+  if (/Firefox/i.test(ua)) return "Firefox";
+  return "Unknown Browser";
+};
+
+const getOS = (ua: string) => {
+  if (/Android/i.test(ua)) return "Android";
+  if (/iPhone|iPad/i.test(ua)) return "iOS";
+  if (/Windows/i.test(ua)) return "Windows";
+  if (/Mac/i.test(ua)) return "macOS";
+  if (/Linux/i.test(ua)) return "Linux";
+  return "Unknown OS";
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const forwarded = req.headers["x-forwarded-for"];
@@ -39,6 +57,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const userAgent = (req.headers["user-agent"] as string) || "unknown";
 
     const isMobile = /Mobile|Android|iPhone|iPad/i.test(userAgent);
+    const deviceType = isMobile ? "📱 Mobile" : "🖥️ Desktop";
+    const deviceInfo = `${deviceType} · ${getOS(userAgent)} · ${getBrowser(userAgent)}`;
     await kv.set(dedupKey, isMobile ? "mobile" : "desktop", { ex: 86400 });
     await kv.incr(`stats:visit:${today}`);
 
@@ -110,7 +130,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         { name: "🌐 Địa chỉ IP", value: `\`${ip}\``, inline: true },
         {
           name: "📱 Thiết bị (User Agent)",
-          value: `\`${userAgent.substring(0, 500)}\``,
+          value: deviceInfo,
           inline: false,
         },
       ],
