@@ -346,6 +346,7 @@ export default function Admin() {
         image: productImage,
         link: productLink,
         description: productDescription,
+        updatedAt: new Date().toISOString(),
       };
       if (editingId) {
         await updateProduct(editingId, data);
@@ -428,6 +429,18 @@ export default function Admin() {
     setProductImage("");
     setProductLink("");
     setProductDescription("");
+  };
+
+  const convertDailymotionLink = (url: string) => {
+    const shortMatch = url.match(/dai\.ly\/([a-zA-Z0-9]+)/);
+    if (shortMatch) {
+      return `https://www.dailymotion.com/embed/video/${shortMatch[1]}`;
+    }
+    const normalMatch = url.match(/dailymotion\.com\/video\/([a-zA-Z0-9]+)/);
+    if (normalMatch) {
+      return `https://www.dailymotion.com/embed/video/${normalMatch[1]}`;
+    }
+    return url;
   };
 
   const filteredEpisodes = useMemo(() => {
@@ -1090,12 +1103,12 @@ export default function Admin() {
               <div className="bg-slate-950 p-6 rounded-2xl shadow-xl border border-white/5 sticky top-8">
                 <h2 className="text-xl font-bold mb-6 text-white flex items-center justify-between">
                   {editingId ? "Cập nhật" : "Thêm mới"}
-                  {editingId && (
+                  {(editingId || episodeNum || episodeName || link) && (
                     <button
                       onClick={resetForm}
                       className="text-sm text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors"
                     >
-                      <X className="w-4 h-4" /> Hủy
+                      <X className="w-4 h-4 " /> Hủy
                     </button>
                   )}
                 </h2>
@@ -1148,8 +1161,28 @@ export default function Admin() {
                           className="w-full bg-slate-900 text-white border-white/10 p-3 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none border transition-colors"
                           placeholder="https://www.dailymotion.com/embed/video/..."
                           value={link}
-                          onChange={(e) => setLink(e.target.value)}
+                          onChange={(e) =>
+                            setLink(convertDailymotionLink(e.target.value))
+                          }
                         />
+                        {link && link.includes("dailymotion.com") && (
+                          <div className="mt-3 rounded-xl overflow-hidden border border-white/10 relative">
+                            <div className="absolute top-2 left-2 z-10">
+                              <span className="text-xs bg-amber-500 text-slate-900 font-bold px-2 py-0.5 rounded-full">
+                                Preview
+                              </span>
+                            </div>
+                            <div className="aspect-video w-full">
+                              <iframe
+                                src={link}
+                                className="w-full h-full"
+                                allowFullScreen
+                                allow="autoplay"
+                                frameBorder="0"
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div className="pt-4">
                         <button
@@ -1414,9 +1447,9 @@ export default function Admin() {
                         {filteredProducts.map((prod) => (
                           <div
                             key={prod.id}
-                            className={`group relative overflow-hidden rounded-xl border transition-all ${editingId === prod.id ? "border-amber-500/50 bg-amber-500/10 shadow-sm ring-1 ring-amber-500/50" : "border-white/5 bg-slate-900 hover:border-white/10 hover:shadow-lg"}`}
+                            className={`flex  flex-col group relative overflow-hidden rounded-xl border transition-all ${editingId === prod.id ? "border-amber-500/50 bg-amber-500/10 shadow-sm ring-1 ring-amber-500/50" : "border-white/5 bg-slate-900 hover:border-white/10 hover:shadow-lg"}`}
                           >
-                            <div className="aspect-[4/3] w-full overflow-hidden bg-slate-800">
+                            <div className="aspect-[3/4] w-full overflow-hidden bg-slate-800">
                               <img
                                 src={prod.image}
                                 alt={prod.name}
@@ -1454,6 +1487,28 @@ export default function Admin() {
                                 <ExternalLink className="w-3.5 h-3.5" />
                                 Mở trên Shopee
                               </a>
+                              {prod.updatedAt && (
+                                <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                                  🕒{" "}
+                                  {(() => {
+                                    const diff =
+                                      Date.now() -
+                                      new Date(prod.updatedAt).getTime();
+                                    const days = Math.floor(
+                                      diff / (1000 * 60 * 60 * 24),
+                                    );
+                                    const hours = Math.floor(
+                                      diff / (1000 * 60 * 60),
+                                    );
+                                    const minutes = Math.floor(
+                                      diff / (1000 * 60),
+                                    );
+                                    if (days > 0) return `${days} ngày trước`;
+                                    if (hours > 0) return `${hours} giờ trước`;
+                                    return `${minutes} phút trước`;
+                                  })()}
+                                </p>
+                              )}
                             </div>
                           </div>
                         ))}

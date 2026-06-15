@@ -17,6 +17,7 @@ export interface Product {
   link: string;
   description: string;
   order?: number;
+  updatedAt?: string;
 }
 
 export const getProducts = async () => {
