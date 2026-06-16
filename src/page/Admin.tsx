@@ -203,9 +203,7 @@ export default function Admin() {
 
           // ✅ Fix: dùng full URL production khi chạy local
           try {
-            const baseUrl = import.meta.env.DEV
-              ? "https://reviews-anime-247.vercel.app"
-              : "";
+            const baseUrl = "https://review-anime-247.vercel.app";
             const statsRes = await fetch(
               `${baseUrl}/api/stats?password=${import.meta.env.VITE_ADMIN_PASSWORD}`,
             );
@@ -213,6 +211,7 @@ export default function Admin() {
             console.log(statsRes);
 
             const statsData = await statsRes.json();
+            console.log(statsData, "ádadsasd");
 
             if (statsData.ok) {
               setTodayStats({
