@@ -106,7 +106,7 @@ function UnlockModal({
                   className={`group relative flex flex-col overflow-hidden rounded-xl border transition-all hover:border-amber-500 cursor-pointer
                     ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-slate-50 border-slate-200"}`}
                 >
-                  <div className="aspect-[4/3] w-full overflow-hidden bg-slate-800">
+                  <div className="aspect-[4/4] w-full overflow-hidden bg-slate-800">
                     <img
                       src={product.image}
                       alt={product.name}

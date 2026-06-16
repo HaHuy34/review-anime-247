@@ -94,6 +94,7 @@ export default function Admin() {
   const [chart7Days, setChart7Days] = useState<
     { date: string; visits: number; clicks: number }[]
   >([]);
+  console.log("chart7Days:", chart7Days);
   const [analytics, setAnalytics] = useState({
     totalViews: 0,
     mobileViews: 0,
@@ -208,6 +209,9 @@ export default function Admin() {
             const statsRes = await fetch(
               `${baseUrl}/api/stats?password=${import.meta.env.VITE_ADMIN_PASSWORD}`,
             );
+
+            console.log(statsRes);
+
             const statsData = await statsRes.json();
 
             if (statsData.ok) {
