@@ -81,7 +81,7 @@ function UnlockModal({
           MỘT VÀI MẪU ĐẸP DÀNH CHO BẠN
         </h2>
         <p className="text-sm opacity-80 mb-6">
-          Có thể bạn sẽ thích các sản phẩm này. Không bắt buộc xem.
+          Có thể bạn sẽ thích các sản phẩm này
         </p>
 
         {confirmingTimer !== null ? (
@@ -142,7 +142,7 @@ function UnlockModal({
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes sparkleBorder {
           0% {
             box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55);
@@ -344,23 +344,16 @@ export default function App() {
   };
 
   const handleTimelineClick = (series: AnimeSeries) => {
-    const dismissed = checkDismissedToday();
-
-    const featuredEpisodes = getFeaturedEpisodes(series);
-    const hasFeatured = featuredEpisodes.length > 0;
-
-    // Nếu có tập nổi bật và chưa từng đóng modal hôm nay → gợi ý sản phẩm
-    // (chỉ là gợi ý, không chặn truy cập)
-    if (hasFeatured && !dismissed) {
-      setSelectedMovie(series);
-      setUnlockTargetEpIndex(-999); // đánh dấu mở full series
-      return;
-    }
-
     setSelectedMovie(series);
-    setView("episodes");
-  };
+    setUnlockTargetEpIndex(-999);
 
+    // Gửi thông báo Discord
+    fetch("/api/series-click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seriesTitle: series.title }),
+    }).catch(() => {});
+  };
   const getLatestEpisodeNum = (series: AnimeSeries) => {
     const valid = series.episodes.filter(
       (ep: any) => ep.src && ep.src.trim() !== "",
