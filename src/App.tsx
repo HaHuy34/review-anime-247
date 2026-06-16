@@ -24,79 +24,73 @@ import TrackingProvider from "./components/TrackingProvider";
 import { trackProductClick } from "./services/trackingService";
 import { motion } from "motion/react";
 
+// ============================================================
+// Modal gợi ý sản phẩm — KHÔNG có gate cứng, người dùng luôn có
+// thể bấm "Xem ngay" ngay lập tức nếu không quan tâm sản phẩm.
+// (Đã xoá hoàn toàn cơ chế Option 2 / isOption2 từng khoá cứng
+// không cho thoát modal.)
+// ============================================================
 function UnlockModal({
   theme,
   products,
   onUnlock,
   onClose,
   handleProductClick,
-  isOption2 = false,
 }: {
   theme: "dark" | "light";
   products: any[];
   onUnlock: () => void;
   onClose: () => void;
   handleProductClick: (p: any) => void;
-  isOption2?: boolean;
 }) {
-  const [skipTimer, setSkipTimer] = useState(isOption2 ? 999999 : 30);
-  const [unlockTimer, setUnlockTimer] = useState<number | null>(null);
+  const [confirmingTimer, setConfirmingTimer] = useState<number | null>(null);
 
   useEffect(() => {
-    let int: any;
-    if (unlockTimer === null) {
-      if (skipTimer > 0 && !isOption2) {
-        int = setInterval(() => {
-          setSkipTimer((prev) => Math.max(0, prev - 1));
-        }, 1000);
-      }
-    } else {
-      int = setInterval(() => {
-        setUnlockTimer((prev) => {
-          if (prev !== null && prev <= 1) {
-            onUnlock();
-            return 0;
-          }
-          return prev !== null ? prev - 1 : null;
-        });
-      }, 1000);
-    }
+    if (confirmingTimer === null) return;
+    const int = setInterval(() => {
+      setConfirmingTimer((prev) => {
+        if (prev !== null && prev <= 1) {
+          onUnlock();
+          return 0;
+        }
+        return prev !== null ? prev - 1 : null;
+      });
+    }, 1000);
     return () => clearInterval(int);
-  }, [unlockTimer, skipTimer, onUnlock, isOption2]);
+  }, [confirmingTimer, onUnlock]);
 
   const onProductClick = (p: any) => {
     handleProductClick(p);
-    setUnlockTimer(5);
+    setConfirmingTimer(3);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div
-        className={`relative w-full max-w-lg rounded-3xl p-6 shadow-2xl border flex flex-col items-center text-center ${theme === "dark" ? "bg-[#13131c] border-white/10 text-white" : "bg-white border-black/10 text-slate-800"}`}
+        className={`relative w-full max-w-lg rounded-3xl p-6 shadow-2xl border flex flex-col items-center text-center sparkle-border ${theme === "dark" ? "bg-[#13131c] border-white/10 text-white" : "bg-white border-black/10 text-slate-800"}`}
       >
-        {!isOption2 && (
-          <button
-            onClick={onClose}
-            className="absolute top-2 right-2 p-2 rounded-full cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-all z-10"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 p-2 rounded-full cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-all z-10"
+          aria-label="Đóng"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
         <h2 className="font-display text-xl sm:text-2xl font-black mb-2 text-amber-500">
-          MỞ KHÓA TOÀN BỘ TẬP MỚI NHẤT!
+          MỘT VÀI MẪU ĐẸP DÀNH CHO BẠN
         </h2>
         <p className="text-sm opacity-80 mb-6">
-          Xem 1 sản phẩm để mở khóa toàn bộ video hôm nay.
+          Có thể bạn sẽ thích các sản phẩm này. Không bắt buộc xem.
         </p>
 
-        {unlockTimer !== null ? (
+        {confirmingTimer !== null ? (
           <div className="py-8 flex flex-col items-center justify-center min-h-[160px]">
             <p className="text-5xl font-display font-black text-amber-500 animate-pulse">
-              {unlockTimer}s
+              {confirmingTimer}s
             </p>
             <p className="text-sm mt-3 opacity-80 font-medium">
-              Đang xác nhận ủng hộ...
+              Đang mở video cho bạn...
             </p>
           </div>
         ) : (
@@ -131,33 +125,42 @@ function UnlockModal({
               ))}
             </div>
 
-            {/* 👇 CHỈ HIỆN NÚT SKIP KHI LÀ OPTION 1 */}
-            {!isOption2 && (
-              <div
-                className={`border-t w-full pt-4 ${theme === "dark" ? "border-white/10" : "border-black/5"}`}
+            {/* Nút xem ngay luôn hiện sẵn, không có thời gian chờ,
+                cùng cấp độ nổi bật với card sản phẩm. */}
+            <div
+              className={`border-t w-full pt-4 ${theme === "dark" ? "border-white/10" : "border-black/5"}`}
+            >
+              <button
+                onClick={onUnlock}
+                className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer
+                  ${theme === "dark" ? "bg-white/10 hover:bg-white/20 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-800"}`}
               >
-                {skipTimer > 0 ? (
-                  <p className="text-xs opacity-60 font-medium">
-                    Hoặc đợi{" "}
-                    <span className="text-amber-500 font-bold">
-                      {skipTimer}s
-                    </span>{" "}
-                    để bỏ qua quảng cáo.
-                  </p>
-                ) : (
-                  <button
-                    onClick={onUnlock}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer
-                      ${theme === "dark" ? "bg-white/10 hover:bg-white/20 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-800"}`}
-                  >
-                    Bỏ qua &amp; Xem ngay
-                  </button>
-                )}
-              </div>
-            )}
+                Xem ngay
+              </button>
+            </div>
           </>
         )}
       </div>
+
+      <style jsx>{`
+        @keyframes sparkleBorder {
+          0% {
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55);
+            border-color: rgba(245, 158, 11, 0.9);
+          }
+          50% {
+            box-shadow: 0 0 18px 4px rgba(245, 158, 11, 0.35);
+            border-color: rgba(251, 191, 36, 1);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55);
+            border-color: rgba(245, 158, 11, 0.9);
+          }
+        }
+        .sparkle-border {
+          animation: sparkleBorder 2.2s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 }
@@ -180,18 +183,6 @@ export default function App() {
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState<boolean>(false);
   const dragonBallRef = useRef<HTMLDivElement | null>(null);
-  const [lockOption, setLockOption] = useState<number>(1);
-  const [isLockOptionLoaded, setIsLockOptionLoaded] = useState(false);
-  useEffect(() => {
-    // Chờ load xong option và products mới kích hoạt
-    if (!isLockOptionLoaded || isLoadingProducts) return;
-    if (lockOption !== 2) return;
-
-    const isUnlocked = checkUnlock();
-    if (!isUnlocked) {
-      setUnlockTargetEpIndex(-998); // -998 = Option 2 trigger
-    }
-  }, [isLockOptionLoaded, lockOption, isLoadingProducts]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -206,7 +197,6 @@ export default function App() {
     message: string;
     type: "success" | "info" | "error";
   } | null>(null);
-  const [firebaseEpisodes, setFirebaseEpisodes] = useState<any[]>([]);
   const scrollToDragonBall = () => {
     dragonBallRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -310,12 +300,6 @@ export default function App() {
     if (savedTheme) {
       setTheme(savedTheme);
     }
-    import("@/src/services/configService").then(({ getActiveLockOption }) => {
-      getActiveLockOption().then((opt) => {
-        setLockOption(opt);
-        setIsLockOptionLoaded(true);
-      });
-    });
   }, []);
 
   useEffect(() => {
@@ -350,27 +334,29 @@ export default function App() {
     }, 4500);
   };
 
-  const checkUnlock = () => {
-    const unlockedDate = localStorage.getItem("unlocked_shopee_date");
-    if (unlockedDate === new Date().toDateString()) return true;
+  // Modal gợi ý sản phẩm vẫn hiển thị (để giữ trải nghiệm khám phá sản phẩm),
+  // nhưng KHÔNG còn khái niệm "unlock" / khoá nội dung — nội dung luôn xem được.
+  // localStorage chỉ dùng để không làm phiền lại trong cùng một ngày.
+  const checkDismissedToday = () => {
+    const dismissedDate = localStorage.getItem("suggest_dismissed_date");
+    if (dismissedDate === new Date().toDateString()) return true;
     return false;
   };
 
   const handleTimelineClick = (series: AnimeSeries) => {
-    const isUnlocked = checkUnlock();
+    const dismissed = checkDismissedToday();
 
-    const premiumEpisodes = getPremiumEpisodes(series);
-    const hasPremium = premiumEpisodes.length > 0;
+    const featuredEpisodes = getFeaturedEpisodes(series);
+    const hasFeatured = featuredEpisodes.length > 0;
 
-    // Nếu có premium và chưa unlock → bật modal Shopee
-    if (hasPremium && !isUnlocked) {
+    // Nếu có tập nổi bật và chưa từng đóng modal hôm nay → gợi ý sản phẩm
+    // (chỉ là gợi ý, không chặn truy cập)
+    if (hasFeatured && !dismissed) {
       setSelectedMovie(series);
-      setUnlockTargetEpIndex(null); // không cần ep cụ thể
       setUnlockTargetEpIndex(-999); // đánh dấu mở full series
       return;
     }
 
-    // đã unlock → vào thẳng episodes
     setSelectedMovie(series);
     setView("episodes");
   };
@@ -384,7 +370,7 @@ export default function App() {
     return Math.max(...nums);
   };
 
-  const getPremiumEpisodes = (series: AnimeSeries) => {
+  const getFeaturedEpisodes = (series: AnimeSeries) => {
     const availableEpisodes = series.episodes
       .filter((ep: any) => ep.src && ep.src.trim() !== "")
       .map((ep: any) => parseInt(ep.name.replace(/\D/g, "")) || 0)
@@ -409,31 +395,23 @@ export default function App() {
     }
   };
 
-  const handleUnlockSuccess = () => {
-    localStorage.setItem("unlocked_shopee_date", new Date().toDateString());
+  const handleModalDismiss = () => {
+    localStorage.setItem("suggest_dismissed_date", new Date().toDateString());
 
-    triggerToast("🎉 Đã mở khóa toàn bộ nội dung!", "success");
-    if (unlockTargetEpIndex === -998) {
-      setUnlockTargetEpIndex(null);
-      return; // Chỉ đóng popup, ở lại trang chủ bình thường
-    }
-
-    // Nếu là mở từ timeline (series)
     if (unlockTargetEpIndex === -999 && selectedMovie) {
       setView("episodes");
       setUnlockTargetEpIndex(null);
       return;
     }
 
-    // Nếu là mở từ episode cũ
-    if (unlockTargetEpIndex !== null) {
+    if (unlockTargetEpIndex !== null && unlockTargetEpIndex >= 0) {
       setIsModalOpen(true);
       setSelectedEpisodeIndex(unlockTargetEpIndex);
     }
 
     setUnlockTargetEpIndex(null);
   };
-  // console.log({selectedMovie.epCount});
+
   const handleEpisodeClick = (epNum: number) => {
     if (!selectedMovie) return;
 
@@ -453,14 +431,7 @@ export default function App() {
         (e: any) => e.name === videoDataList[foundEpIndex].name,
       );
 
-      const premiumEpisodes = getPremiumEpisodes(selectedMovie);
-      const isPremium = premiumEpisodes.includes(epNum);
-
-      if (isPremium && !checkUnlock()) {
-        setUnlockTargetEpIndex(finalIndex);
-        return;
-      }
-
+      // Nội dung luôn xem được ngay — không còn kiểm tra "premium/locked".
       setIsModalOpen(true);
       setSelectedEpisodeIndex(finalIndex);
       triggerToast(
@@ -478,14 +449,9 @@ export default function App() {
   const handleToggleTimeline = () => {
     if (isTimelineExpanded) {
       if (dragonBallRef.current) {
-        // 1. Đo lường chính xác vị trí của phần "Trình tự xem" so với viewport hiện tại
         const rect = dragonBallRef.current.getBoundingClientRect();
         const scrollTop = window.scrollY || document.documentElement.scrollTop;
-
-        // 2. Tính toán điểm cuộn tối ưu (bớt đi 40px để tiêu đề trông thoáng và đẹp hơn)
         const targetScrollTop = rect.top + scrollTop - 40;
-
-        // 3. Thực hiện cuộn chuẩn xác cùng thời điểm với hoạt ảnh đóng lại
         window.scrollTo({
           top: targetScrollTop,
           behavior: "smooth",
@@ -739,7 +705,6 @@ export default function App() {
                 </div>
                 {isMobile && (
                   <div className="mt-3 flex flex-col items-center justify-center relative z-20">
-                    {/* Divider connector */}
                     <div className="w-px h-6 bg-amber-500/30 border-dashed border-l mb-2" />
 
                     <MotionButton
@@ -882,9 +847,6 @@ export default function App() {
                   <span className="text-[10px] bg-amber-500/10 border border-amber-500/25 text-amber-400 font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
                     {selectedMovie.epCount} Tập
                   </span>
-                  <span className="text-[10px] bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                    ★ ỦNG HỘ AD BẰNG MỘT LƯỢT CLICK NHÉ
-                  </span>
                 </div>
 
                 <h1 className="font-display text-3xl sm:text-5xl font-black tracking-tight text-white uppercase select-none">
@@ -916,10 +878,8 @@ export default function App() {
                     parseInt(episode.name.replace(/\D/g, "")) || index + 1;
                   const epNumStr = String(epNum).padStart(2, "0");
                   const isAvailable = episode.src && episode.src.trim() !== "";
-                  const premiumEpisodes = getPremiumEpisodes(selectedMovie);
-                  const isPremium = premiumEpisodes.includes(epNum);
-                  const isUnlocked = checkUnlock();
-                  const isLocked = isPremium && !isUnlocked;
+                  const featuredEpisodes = getFeaturedEpisodes(selectedMovie);
+                  const isFeatured = featuredEpisodes.includes(epNum);
                   return (
                     <button
                       key={epNum}
@@ -928,7 +888,7 @@ export default function App() {
 ${
   !isAvailable
     ? "bg-white/[0.01] border-transparent opacity-40 cursor-not-allowed select-none text-slate-500"
-    : isPremium
+    : isFeatured
       ? "bg-gradient-to-br from-amber-900/40 via-yellow-800/20 to-amber-900/40 border-amber-500 text-amber-200 hover:border-amber-400 hover:-translate-y-1"
       : "bg-[#0c0c14] border-white/5 hover:border-amber-500/50 hover:-translate-y-1 hover:shadow-lg text-white cursor-pointer"
 }`}
@@ -939,13 +899,11 @@ ${
 
                       <span
                         className={`font-display text-3xl font-black pb-1 pt-2 block ${
-                          isLocked
-                            ? "text-amber-300"
-                            : isPremium
-                              ? "text-emerald-400"
-                              : isAvailable
-                                ? "text-white"
-                                : "text-inherit"
+                          isFeatured
+                            ? "text-emerald-400"
+                            : isAvailable
+                              ? "text-white"
+                              : "text-inherit"
                         }`}
                       >
                         {epNumStr}
@@ -957,22 +915,6 @@ ${
                             <Play className="w-4 h-4 text-amber-500 fill-current ml-0.5" />
                           </div>
                         </div>
-                      )}
-
-                      {isPremium && (
-                        <span
-                          className={`absolute top-2 right-2 p-1 rounded-full shadow ${
-                            isLocked
-                              ? "bg-amber-500 text-black"
-                              : "bg-emerald-500 text-white"
-                          }`}
-                        >
-                          {isLocked ? (
-                            <Lock className="w-3.5 h-3.5" />
-                          ) : (
-                            <LockOpen className="w-3.5 h-3.5" />
-                          )}
-                        </span>
                       )}
                     </button>
                   );
@@ -1083,10 +1025,9 @@ ${
         <UnlockModal
           theme={theme}
           products={products}
-          onUnlock={handleUnlockSuccess}
+          onUnlock={handleModalDismiss}
           onClose={() => setUnlockTargetEpIndex(null)}
           handleProductClick={handleProductClick}
-          isOption2={unlockTargetEpIndex === -998}
         />
       )}
 
@@ -1096,7 +1037,7 @@ ${
             Review Anime 24/7 • Dragon Ball Series
           </p>
           <p className="text-[10px] font-mono text-slate-600">
-            Phiên Bản 1.3.0 • 2026 UTC
+            Phiên Bản 1.4.0 • 2026 UTC
           </p>
         </div>
       </footer>

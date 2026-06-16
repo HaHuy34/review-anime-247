@@ -55,10 +55,6 @@ import {
   getAnalyticsSumary,
   getRecentVisits,
 } from "../services/trackingService";
-import {
-  getActiveLockOption,
-  updateActiveLockOption,
-} from "../services/configService";
 
 const AnimatedCounter = ({ value }: { value: number }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -93,10 +89,8 @@ const AnimatedCounter = ({ value }: { value: number }) => {
 
 export default function Admin() {
   const navigate = useNavigate();
-  const [currentLockOption, setCurrentLockOption] = useState<number>(1);
   const [todayStats, setTodayStats] = useState({ visits: 0, clicks: 0 });
   const [ipTab, setIpTab] = useState<"visit" | "click">("visit");
-  const [isOptionLoading, setIsOptionLoading] = useState(false);
   const [chart7Days, setChart7Days] = useState<
     { date: string; visits: number; clicks: number }[]
   >([]);
@@ -171,26 +165,6 @@ export default function Admin() {
   ) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
-  };
-
-  useEffect(() => {
-    const fetchOption = async () => {
-      const opt = await getActiveLockOption();
-      setCurrentLockOption(opt);
-    };
-    fetchOption();
-  }, [activeTab]);
-
-  const handleSaveLockOption = async (optionNum: number) => {
-    setIsOptionLoading(true);
-    const success = await updateActiveLockOption(optionNum);
-    if (success) {
-      setCurrentLockOption(optionNum);
-      triggerToast(`Đã đổi sang Option ${optionNum}!`, "success");
-    } else {
-      triggerToast("Có lỗi xảy ra khi lưu trên Firebase!", "error");
-    }
-    setIsOptionLoading(false);
   };
 
   useEffect(() => {
@@ -899,7 +873,6 @@ export default function Admin() {
               </div>
 
               {/* Mobile: hiện theo tab */}
-              {/* Mobile: hiện theo tab */}
               <div className="md:hidden space-y-2 max-h-72 overflow-y-auto">
                 {ipTab === "visit" ? (
                   ipLists.visitIpsWithDevice.length === 0 ? (
@@ -1034,65 +1007,30 @@ export default function Admin() {
                 </div>
               </div>
             </div>
-            {/* Khối cấu hình tùy chọn khóa */}
+            {/* Khối thông tin chế độ gợi ý sản phẩm */}
             <div className="bg-slate-950 p-6 rounded-2xl border border-white/5 md:col-span-full mb-6">
               <h2 className="text-lg font-bold text-amber-500 mb-2">
-                ⚙️ Cấu hình Chế Độ Khóa Shopee (Lock Mode Options)
+                ⚙️ Chế độ gợi ý sản phẩm Shopee
               </h2>
               <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Tùy chỉnh tính năng hiển thị popup sản phẩm Shopee để ép/giới
-                thiệu người dùng click ủng hộ bạn trước khi xem phim.
+                Khi người dùng mở một series, hệ thống hiển thị một popup gợi ý
+                vài sản phẩm Shopee liên quan. Đây chỉ là gợi ý — nút "Xem ngay"
+                luôn hiển thị sẵn để xem nội dung ngay lập tức, không có thời
+                gian chờ hay yêu cầu bắt buộc click sản phẩm.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => handleSaveLockOption(1)}
-                  disabled={isOptionLoading}
-                  className={`p-5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                    currentLockOption === 1
-                      ? "border-amber-500 bg-amber-500/[0.04]"
-                      : "border-white/5 bg-slate-900 hover:border-white/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className={`w-3 h-3 rounded-full ${currentLockOption === 1 ? "bg-amber-500 animate-pulse" : "bg-slate-600"}`}
-                    />
-                    <span className="font-bold text-white text-sm">
-                      Option 1: Khóa khi xem tập phim (Mặc định)
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Người dùng truy cập xem bình thường. Khi click vào các tập
-                    phim mới nhất / premium, họ phải bấm xem sản phẩm Shopee bất
-                    kỳ bên dưới, đợi hết 7 giây đếm ngược để mở khóa xem phim.
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSaveLockOption(2)}
-                  disabled={isOptionLoading}
-                  className={`p-5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                    currentLockOption === 2
-                      ? "border-amber-500 bg-amber-500/[0.04]"
-                      : "border-white/5 bg-slate-900 hover:border-white/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className={`w-3 h-3 rounded-full ${currentLockOption === 2 ? "bg-amber-500 animate-pulse" : "bg-slate-600"}`}
-                    />
-                    <span className="font-bold text-white text-sm">
-                      Option 2: Khóa toàn trang ngay khi vừa vào trang web
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Chặn toàn bộ màn hình ngay khi vừa mở web. Họ bắt buộc phải
-                    bấm xem sản phẩm Shopee, đợi 7 giây đếm ngược để mở khóa
-                    trang chủ thì mới có thể thao tác chọn phim.
-                  </p>
-                </button>
+              <div className="p-5 rounded-2xl border border-amber-500 bg-amber-500/[0.04]">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-3 h-3 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="font-bold text-white text-sm">
+                    Đang hoạt động: Popup gợi ý không chặn nội dung
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Người dùng truy cập và xem phim bình thường. Khi mở một
+                  series, popup gợi ý sản phẩm Shopee liên quan xuất hiện kèm
+                  nút "Xem ngay" có sẵn ngay từ đầu, để người dùng tự quyết định
+                  có quan tâm sản phẩm hay không.
+                </p>
               </div>
             </div>
           </motion.div>
