@@ -61,6 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const deviceInfo = `${deviceType} · ${getOS(userAgent)} · ${getBrowser(userAgent)}`;
     await kv.set(dedupKey, isMobile ? "mobile" : "desktop", { ex: 86400 });
     await kv.incr(`stats:visit:${today}`);
+    await kv.incr("stats:visit:total");
 
     let geo: any = null;
 

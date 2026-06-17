@@ -15,6 +15,7 @@ import {
   Lock,
   LockOpen,
   ChevronDown,
+  Eye,
 } from "lucide-react";
 
 import { initialAnimeData } from "@/src/data";
@@ -203,8 +204,15 @@ export default function App() {
       block: "start",
     });
   };
+  const [totalVisits, setTotalVisits] = useState<number>(0);
   useEffect(() => {
     fetch("/api/visit").catch(() => {});
+    fetch("/api/total-visits")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok) setTotalVisits(data.total);
+      })
+      .catch(() => {});
     // Load static data initially
     setMovies(initialAnimeData);
 
@@ -525,7 +533,55 @@ export default function App() {
             <section className="flex flex-col items-center text-center max-w-xl mx-auto space-y-4">
               <div className="relative w-28 h-28 sm:w-32 sm:h-32">
                 <img
-                  src="https://scontent.fhan14-5.fna.fbcdn.net/v/t39.30808-6/709863882_122095903413352638_3815257389828996505_n.jpg?stp=dst-jpg_tt6&cstp=mx960x540&ctp=s960x540&_nc_cat=109&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=ZUkKrXebz2AQ7kNvwGY8tHo&_nc_oc=AdoigxKsMm7oSWM6LRYStHxxWEgXABMOwcORr4q3O5ROFVkmnc29-3lc1YLu-4FiXTOj_Ody97BqrKNt7N8wWM6C&_nc_zt=23&_nc_ht=scontent.fhan14-5.fna&_nc_gid=CIVV7vGTBsDTaYIsoGbUYQ&_nc_ss=7b2a8&oh=00_Af9CBa6uVKuIQXkp0xtPVdMfZ9xwA3pnLXN87cHncClozg&oe=6A322E9D"
+                  src="./src/images/avatas.jpg"
+                  alt="Avatar Review Anime 24/7"
+                  className="w-full h-full object-cover rounded-full border-4 border-amber-500/30 shadow-2xl"
+                  referrerPolicy="no-referrer"
+                />
+
+                <a
+                  href="https://www.facebook.com/profile.php?id=61590457230547"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-white hover:text-amber-500 hover:scale-110 active:scale-95 transition-all shadow-md cursor-pointer"
+                  title="Ghé thăm Facebook"
+                >
+                  <Facebook className="w-4 h-4" />
+                </a>
+
+                {/* --- Đám mây suy nghĩ --- */}
+                <div className="sm:hidden absolute -top-10 -right-16 sm:-top-30 sm:-right-20 flex flex-col items-end">
+                  {/* Cụm mây chính - vẽ bằng SVG để viền tự nhiên như mây */}
+                  <div className="relative w-24 h-14 sm:w-36 sm:h-20">
+                    <svg
+                      viewBox="0 0 160 90"
+                      className="absolute inset-0 w-full h-full drop-shadow-lg"
+                    >
+                      <circle cx="34" cy="50" r="20" fill="white" />
+                      <circle cx="60" cy="28" r="22" fill="white" />
+                      <circle cx="95" cy="22" r="24" fill="white" />
+                      <circle cx="128" cy="34" r="20" fill="white" />
+                      <circle cx="138" cy="58" r="16" fill="white" />
+                      <ellipse cx="85" cy="55" rx="58" ry="26" fill="white" />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center pl-2">
+                      <span className="text-slate-800 text-xs sm:text-sm font-bold whitespace-nowrap">
+                        {totalVisits.toLocaleString("vi-VN")} lượt
+                      </span>
+                    </div>
+                    <span className="absolute top-21 left-10 w-1.5 h-1.5 bg-white rounded-full shadow"></span>
+                    <span className="absolute top-17 left-11 w-2.5 h-2.5 bg-white rounded-full shadow"></span>
+                    <span className="absolute top-13 left-12 w-3 h-3 bg-white rounded-full shadow"></span>
+                  </div>
+
+                  {/* Bong bóng nhỏ dẫn xuống đầu nhân vật */}
+
+                  {/* <span className="absolute top-0 left-32 w-3 h-3 bg-white rounded-full shadow"></span> */}
+                </div>
+              </div>
+              {/* <div className="relative w-28 h-28 sm:w-32 sm:h-32">
+                <img
+                  src="./src/images/avatas.jpg"
                   alt="Avatar Review Anime 24/7"
                   className="w-full h-full object-cover rounded-full border-4 border-amber-500/30 shadow-2xl"
                   referrerPolicy="no-referrer"
@@ -539,7 +595,7 @@ export default function App() {
                 >
                   <Facebook className="w-4 h-4" />
                 </a>
-              </div>
+              </div> */}
 
               <div className="space-y-1">
                 <h1 className="font-display text-4xl font-extrabold tracking-tight">
