@@ -533,7 +533,7 @@ export default function App() {
             <section className="flex flex-col items-center text-center max-w-xl mx-auto space-y-4">
               <div className="relative w-28 h-28 sm:w-32 sm:h-32">
                 <img
-                  src="./src/images/avatas.jpg"
+                  src="https://scontent.fhan2-5.fna.fbcdn.net/v/t39.30808-1/709863882_122095903413352638_3815257389828996505_n.jpg?stp=c210.0.540.540a_dst-jpg_tt6&cstp=mx540x540&ctp=s200x200&_nc_cat=109&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=UbLmHHddLLIQ7kNvwHatf9L&_nc_oc=AdqHyl2t1Pisuh3Q4z0z0wqbpmxwYMBNxq8pB2Ch9UKPHc6DW_xSOOA95o0bVoVn6fM&_nc_zt=24&_nc_ht=scontent.fhan2-5.fna&_nc_gid=47gV1jGil3ChuS-w14wSZA&_nc_ss=7b2a8&oh=00_Af_Oyr4KW5z-DZDr0L6paroj-G6nhfKmn8-NyEVU9EF8VA&oe=6A3860FA"
                   alt="Avatar Review Anime 24/7"
                   className="w-full h-full object-cover rounded-full border-4 border-amber-500/30 shadow-2xl"
                   referrerPolicy="no-referrer"
