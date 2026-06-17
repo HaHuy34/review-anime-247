@@ -23,7 +23,7 @@ import { AnimeSeries } from "@/src/types";
 import VideoModal from "@/src/components/VideoModal";
 import TrackingProvider from "./components/TrackingProvider";
 import { trackProductClick } from "./services/trackingService";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 // ============================================================
 // Modal gợi ý sản phẩm — KHÔNG có gate cứng, người dùng luôn có
@@ -322,7 +322,7 @@ export default function App() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 400) {
+      if (window.scrollY > 150) {
         setShowScrollBtn(true);
       } else {
         setShowScrollBtn(false);
@@ -550,12 +550,17 @@ export default function App() {
                 </a>
 
                 {/* --- Đám mây suy nghĩ --- */}
-                <div className="sm:hidden absolute -top-10 -right-16 sm:-top-30 sm:-right-20 flex flex-col items-end">
-                  {/* Cụm mây chính - vẽ bằng SVG để viền tự nhiên như mây */}
-                  <div className="relative w-24 h-14 sm:w-36 sm:h-20">
+                <div
+                  className="sm:hidden absolute -top-10 -right-16 flex flex-col items-end"
+                  style={{ animation: "cloudFloat 3.5s ease-in-out infinite" }}
+                >
+                  <div className="relative w-24 h-14">
                     <svg
                       viewBox="0 0 160 90"
                       className="absolute inset-0 w-full h-full drop-shadow-lg"
+                      style={{
+                        animation: "cloudPulse 3s ease-in-out infinite",
+                      }}
                     >
                       <circle cx="34" cy="50" r="20" fill="white" />
                       <circle cx="60" cy="28" r="22" fill="white" />
@@ -565,18 +570,46 @@ export default function App() {
                       <ellipse cx="85" cy="55" rx="58" ry="26" fill="white" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center pl-2">
-                      <span className="text-slate-800 text-xs sm:text-sm font-bold whitespace-nowrap">
-                        {totalVisits.toLocaleString("vi-VN")} lượt
+                      <span className="text-slate-800 text-xs font-bold whitespace-nowrap">
+                        {totalVisits.toLocaleString("vi-VN")} 🐉🐲
                       </span>
                     </div>
-                    <span className="absolute top-21 left-10 w-1.5 h-1.5 bg-white rounded-full shadow"></span>
-                    <span className="absolute top-17 left-11 w-2.5 h-2.5 bg-white rounded-full shadow"></span>
-                    <span className="absolute top-13 left-12 w-3 h-3 bg-white rounded-full shadow"></span>
+
+                    {/* Bong bóng dẫn xuống đầu nhân vật */}
+                    <span
+                      className="absolute bg-white rounded-full shadow"
+                      style={{
+                        width: 6,
+                        height: 6,
+                        bottom: -10,
+                        left: 28,
+                        animation:
+                          "bubbleBounce 3.5s ease-in-out infinite 0.1s",
+                      }}
+                    />
+                    <span
+                      className="absolute bg-white rounded-full shadow"
+                      style={{
+                        width: 10,
+                        height: 10,
+                        bottom: -22,
+                        left: 24,
+                        animation:
+                          "bubbleBounce 3.5s ease-in-out infinite 0.2s",
+                      }}
+                    />
+                    <span
+                      className="absolute bg-white rounded-full shadow"
+                      style={{
+                        width: 12,
+                        height: 12,
+                        bottom: -36,
+                        left: 20,
+                        animation:
+                          "bubbleBounce 3.5s ease-in-out infinite 0.3s",
+                      }}
+                    />
                   </div>
-
-                  {/* Bong bóng nhỏ dẫn xuống đầu nhân vật */}
-
-                  {/* <span className="absolute top-0 left-32 w-3 h-3 bg-white rounded-full shadow"></span> */}
                 </div>
               </div>
               {/* <div className="relative w-28 h-28 sm:w-32 sm:h-32">
@@ -1050,16 +1083,23 @@ ${
           </div>
         )}
       </main>
-
-      {showScrollBtn && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-6 right-6 w-12 h-12 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center z-40 transition-all shadow-xl hover:scale-110 cursor-pointer shadow-amber-500/20"
-          title="Lên đầu trang"
-        >
-          <ChevronUp className="w-6 h-6 stroke-[3]" />
-        </button>
-      )}
+      <AnimatePresence>
+        {showScrollBtn && (
+          <MotionButton
+            initial={{ opacity: 0, y: 20, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.8 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="fixed bottom-[80px] right-[50px] w-12 h-12 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center z-40 shadow-xl cursor-pointer shadow-amber-500/20"
+            title="Lên đầu trang"
+          >
+            <ChevronUp className="w-6 h-6 stroke-[3]" />
+          </MotionButton>
+        )}
+      </AnimatePresence>
 
       {isModalOpen && selectedMovie && (
         <VideoModal

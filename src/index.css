@@ -109,3 +109,44 @@
     transform: scale(1.15);
   }
 }
+
+.sm\:hidden.absolute.-top-10.-right-16.flex.flex-col.items-end {
+  top: -21px;
+  right: -73px;
+}
+
+@keyframes cloudFloat {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(-1deg);
+  }
+  33% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(-4px) rotate(-0.5deg);
+  }
+}
+
+@keyframes cloudPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes bubbleBounce {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  33% {
+    transform: translateY(-6px);
+  }
+  66% {
+    transform: translateY(-3px);
+  }
+}
