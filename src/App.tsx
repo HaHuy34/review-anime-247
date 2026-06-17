@@ -184,6 +184,25 @@ export default function App() {
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState<boolean>(false);
   const dragonBallRef = useRef<HTMLDivElement | null>(null);
+  const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const MotionSpan = motion.span as any;
+
+  useEffect(() => {
+    const handleScrollProgress = () => {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const docHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      setScrollProgress(progress);
+    };
+    handleScrollProgress();
+    window.addEventListener("scroll", handleScrollProgress);
+    window.addEventListener("resize", handleScrollProgress);
+    return () => {
+      window.removeEventListener("scroll", handleScrollProgress);
+      window.removeEventListener("resize", handleScrollProgress);
+    };
+  }, []);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -525,6 +544,20 @@ export default function App() {
             </button>
           </div>
         </div>
+        <div
+          className="absolute bottom-0 left-0 h-[3px] bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-150 ease-out"
+          style={{ width: `${scrollProgress}%` }}
+        >
+          <img
+            src="https://media0.giphy.com/media/v1.Y2lkPTZjMDliOTUydWQybzhiZ3k0ZnVheWVnZXJoamg5amFudnhuenU3enZuZnByeGVseSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/IizHZy80WZbkmHiaVP/giphy.gif"
+            alt=""
+            className="absolute -top-8 -right-5 w-10 h-10 transition-all duration-150 ease-out"
+            style={{
+              opacity: scrollProgress > 1 ? 1 : 0,
+              transform: "scaleX(-1)",
+            }}
+          />
+        </div>
       </header>
 
       <main className="relative max-w-6xl mx-auto px-4 pt-28 pb-16 z-10">
@@ -533,7 +566,7 @@ export default function App() {
             <section className="flex flex-col items-center text-center max-w-xl mx-auto space-y-4">
               <div className="relative w-28 h-28 sm:w-32 sm:h-32">
                 <img
-                  src="https://scontent.fhan2-5.fna.fbcdn.net/v/t39.30808-1/709863882_122095903413352638_3815257389828996505_n.jpg?stp=c210.0.540.540a_dst-jpg_tt6&cstp=mx540x540&ctp=s200x200&_nc_cat=109&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=UbLmHHddLLIQ7kNvwHatf9L&_nc_oc=AdqHyl2t1Pisuh3Q4z0z0wqbpmxwYMBNxq8pB2Ch9UKPHc6DW_xSOOA95o0bVoVn6fM&_nc_zt=24&_nc_ht=scontent.fhan2-5.fna&_nc_gid=47gV1jGil3ChuS-w14wSZA&_nc_ss=7b2a8&oh=00_Af_Oyr4KW5z-DZDr0L6paroj-G6nhfKmn8-NyEVU9EF8VA&oe=6A3860FA"
+                  src="https://giffiles.alphacoders.com/207/207839.gif"
                   alt="Avatar Review Anime 24/7"
                   className="w-full h-full object-cover rounded-full border-4 border-amber-500/30 shadow-2xl"
                   referrerPolicy="no-referrer"
@@ -612,27 +645,32 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              {/* <div className="relative w-28 h-28 sm:w-32 sm:h-32">
-                <img
-                  src="./src/images/avatas.jpg"
-                  alt="Avatar Review Anime 24/7"
-                  className="w-full h-full object-cover rounded-full border-4 border-amber-500/30 shadow-2xl"
-                  referrerPolicy="no-referrer"
-                />
-                <a
-                  href="https://www.facebook.com/profile.php?id=61590457230547"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-white hover:text-amber-500 hover:scale-110 active:scale-95 transition-all shadow-md cursor-pointer"
-                  title="Ghé thăm Facebook"
-                >
-                  <Facebook className="w-4 h-4" />
-                </a>
-              </div> */}
 
               <div className="space-y-1">
-                <h1 className="font-display text-4xl font-extrabold tracking-tight">
-                  Review Anime 24/7
+                <h1 className="font-display text-4xl font-extrabold tracking-tight flex items-baseline justify-center flex-wrap">
+                  {"Review Anime 24/7".split("").map((char, i) => (
+                    <MotionSpan
+                      key={i}
+                      style={{ display: "inline-block", whiteSpace: "pre" }}
+                      initial={{ x: -40, opacity: 0, rotate: 0 }}
+                      animate={{
+                        x: 0,
+                        opacity: 1,
+                        rotate: [0, -8, 8, -5, 5, 0],
+                      }}
+                      transition={{
+                        x: { duration: 0.35, ease: "easeOut", delay: i * 0.05 },
+                        opacity: { duration: 0.35, delay: i * 0.05 },
+                        rotate: {
+                          duration: 0.5,
+                          delay: i * 0.05 + 0.1,
+                          ease: "easeInOut",
+                        },
+                      }}
+                    >
+                      {char}
+                    </MotionSpan>
+                  ))}
                 </h1>
                 <p
                   onClick={scrollToDragonBall}
