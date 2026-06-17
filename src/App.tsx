@@ -166,6 +166,113 @@ function UnlockModal({
   );
 }
 
+function DonateModal({
+  theme,
+  qrSrc,
+  origin = { x: 0, y: 0 },
+  onClose,
+}: {
+  theme: "dark" | "light";
+  qrSrc: string;
+  origin?: { x: number; y: number };
+  onClose: () => void;
+}) {
+  const MotionDiv = motion.div as any;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <MotionDiv
+        initial={{ opacity: 0, scale: 0.1, x: origin.x, y: origin.y }}
+        animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+        exit={{ opacity: 0, scale: 0.1, x: origin.x, y: origin.y }}
+        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        className={`relative w-full max-w-sm rounded-3xl p-6 shadow-2xl border flex flex-col items-center text-center donate-sparkle-border ${
+          theme === "dark"
+            ? "bg-[#13131c] border-white/10 text-white"
+            : "bg-white border-black/10 text-slate-800"
+        }`}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 p-2 rounded-full cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-all z-10"
+          aria-label="Đóng"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="flex flex-col items-center gap-2 mb-1">
+          <h2 className="font-display text-xl sm:text-2xl font-black text-amber-500">
+            1đ cũng quý
+          </h2>
+          {/* <br />
+          <h6 className="sm:text-2xl font-black text-amber-400">
+            nhưng ko có tiền tất cả bằng null
+          </h6> */}
+        </div>
+        {/* <p className="text-sm opacity-80 mb-5">
+          Quét mã QR để donate giúp admin duy trì server nhé 🙏
+        </p> */}
+
+        <MotionDiv
+          initial={{ opacity: 0, scale: 0.6, rotate: -6 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={{
+            delay: 0.15,
+            duration: 0.5,
+            ease: "easeOut",
+            type: "spring",
+            bounce: 0.35,
+          }}
+          className="relative p-3 rounded-2xl bg-white donate-qr-glow"
+        >
+          <img
+            src={qrSrc}
+            alt="QR Code Donate"
+            className="w-56 h-56 sm:w-64 sm:h-64 object-contain rounded-xl"
+          />
+        </MotionDiv>
+
+        <p
+          className={`text-xs mt-5 font-medium ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
+        >
+          Cảm ơn bạn đã đồng hành cùng Review Anime 24/7 ❤️
+        </p>
+      </MotionDiv>
+
+      <style>{`
+        @keyframes donateSparkleBorder {
+          0% {
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55);
+            border-color: rgba(245, 158, 11, 0.9);
+          }
+          50% {
+            box-shadow: 0 0 18px 4px rgba(245, 158, 11, 0.35);
+            border-color: rgba(251, 191, 36, 1);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55);
+            border-color: rgba(245, 158, 11, 0.9);
+          }
+        }
+        .donate-sparkle-border {
+          animation: donateSparkleBorder 2.2s ease-in-out infinite;
+        }
+        @keyframes donateQrGlow {
+          0%, 100% {
+            box-shadow: 0 0 0px 0px rgba(245, 158, 11, 0.0);
+          }
+          50% {
+            box-shadow: 0 0 25px 6px rgba(245, 158, 11, 0.45);
+          }
+        }
+        .donate-qr-glow {
+          animation: donateQrGlow 2.4s ease-in-out infinite;
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function App() {
   const MotionDiv = motion.div as any;
   const MotionButton = motion.button as any;
@@ -181,6 +288,14 @@ export default function App() {
   const [unlockTargetEpIndex, setUnlockTargetEpIndex] = useState<number | null>(
     null,
   );
+  const [isDonateModalOpen, setIsDonateModalOpen] = useState<boolean>(false);
+  const donateQrSrc =
+    "https://i.pinimg.com/564x/f1/02/0d/f1020d0e788e185df92fbc5d207b5ab1.jpg";
+  const donateCloudRef = useRef<HTMLDivElement | null>(null);
+  const [donateOrigin, setDonateOrigin] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState<boolean>(false);
   const dragonBallRef = useRef<HTMLDivElement | null>(null);
@@ -369,7 +484,18 @@ export default function App() {
     if (dismissedDate === new Date().toDateString()) return true;
     return false;
   };
-
+  const handleOpenDonateModal = () => {
+    const rect = donateCloudRef.current?.getBoundingClientRect();
+    if (rect) {
+      const cloudCenterX = rect.left + rect.width / 2;
+      const cloudCenterY = rect.top + rect.height / 2;
+      setDonateOrigin({
+        x: cloudCenterX - window.innerWidth / 2,
+        y: cloudCenterY - window.innerHeight / 2,
+      });
+    }
+    setIsDonateModalOpen(true);
+  };
   const handleTimelineClick = (series: AnimeSeries) => {
     setSelectedMovie(series);
     setUnlockTargetEpIndex(-999);
@@ -584,8 +710,12 @@ export default function App() {
 
                 {/* --- Đám mây suy nghĩ --- */}
                 <div
-                  className="sm:hidden absolute -top-10 -right-16 flex flex-col items-end"
+                  ref={donateCloudRef}
+                  className="sm:hidden absolute -top-10 -right-16 flex flex-col items-end cursor-pointer"
                   style={{ animation: "cloudFloat 3.5s ease-in-out infinite" }}
+                  onClick={handleOpenDonateModal}
+                  role="button"
+                  aria-label="Donate cho admin"
                 >
                   <div className="relative w-24 h-14">
                     <svg
@@ -1157,6 +1287,17 @@ ${
           handleProductClick={handleProductClick}
         />
       )}
+
+      <AnimatePresence>
+        {isDonateModalOpen && (
+          <DonateModal
+            theme={theme}
+            qrSrc={donateQrSrc}
+            origin={donateOrigin}
+            onClose={() => setIsDonateModalOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <footer className="border-t border-white/5 py-10 mt-16 text-slate-500 text-xs text-center relative z-10 bg-[#050508]/80 backdrop-blur-sm">
         <div className="max-w-2xl mx-auto space-y-4">

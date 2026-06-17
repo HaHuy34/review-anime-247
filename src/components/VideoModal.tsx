@@ -72,7 +72,6 @@ export default function VideoModal({
     [key: string]: boolean;
   }>({});
 
-  // --- Odysee slow load ---
   const [slowLoadWarning, setSlowLoadWarning] = useState(false);
   const slowLoadTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -80,7 +79,6 @@ export default function VideoModal({
 
   const currentEpisodeDetails = validEpisodes[currentIndex];
 
-  // Odysee timeout: reset mỗi khi đổi tập
   useEffect(() => {
     setSlowLoadWarning(false);
     if (slowLoadTimerRef.current) clearTimeout(slowLoadTimerRef.current);
@@ -89,7 +87,7 @@ export default function VideoModal({
     if (isOdysee) {
       slowLoadTimerRef.current = setTimeout(() => {
         setSlowLoadWarning(true);
-      }, 9000); // 9  s giây chưa load xong → cảnh báo
+      }, 9000);
     }
 
     return () => {
