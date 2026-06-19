@@ -13,8 +13,11 @@ import {
 import {
   EyeClosed,
   LayoutDashboard,
+  MessageCircle,
   Monitor,
+  Reply,
   Search,
+  Shield,
   ShoppingBag,
   Smartphone,
 } from "lucide-react";
@@ -131,7 +134,7 @@ export default function Admin() {
   }, [navigate]);
 
   const [activeTab, setActiveTab] = useState<
-    "overview" | "episodes" | "products"
+    "overview" | "episodes" | "products" | "comments"
   >("overview");
   const [totalEpisodes, setTotalEpisodes] = useState(0);
   const [selectedSeries, setSelectedSeries] = useState(initialAnimeData[1].id);
@@ -154,6 +157,11 @@ export default function Admin() {
     message: string;
     onConfirm: () => void;
   } | null>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [commentSearch, setCommentSearch] = useState("");
+  const [isReplyLoading, setIsReplyLoading] = useState(false);
 
   const [toast, setToast] = useState<{
     message: string;
@@ -166,6 +174,73 @@ export default function Admin() {
   ) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  // Load comments realtime từ Firestore
+  useEffect(() => {
+    if (isAuthChecking || activeTab !== "comments") return;
+    import("firebase/firestore").then(
+      ({ collection, query, orderBy, onSnapshot }) => {
+        import("@/src/firebase/config").then(({ db }) => {
+          const q = query(
+            collection(db, "comments"),
+            orderBy("pinned", "desc"),
+            orderBy("createdAt", "desc"),
+          );
+          const unsub = onSnapshot(q, (snap) => {
+            setComments(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+          });
+          return () => unsub();
+        });
+      },
+    );
+  }, [activeTab, isAuthChecking]);
+
+  // Xóa comment
+  const handleAdminDeleteComment = async (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      message: "Xóa bình luận này?",
+      onConfirm: async () => {
+        const { doc, deleteDoc } = await import("firebase/firestore");
+        const { db } = await import("@/src/firebase/config");
+        await deleteDoc(doc(db, "comments", id));
+        triggerToast("Đã xóa bình luận!", "success");
+      },
+    });
+  };
+
+  // Reply với tư cách Admin
+  const handleAdminReply = async (commentId: string) => {
+    if (!replyContent.trim()) return;
+    setIsReplyLoading(true);
+    try {
+      const { doc, updateDoc, arrayUnion } = await import("firebase/firestore");
+      const { db } = await import("@/src/firebase/config");
+      const newReply = {
+        id: Math.random().toString(36).slice(2),
+        name: "Admin",
+        avatar: null,
+        content: replyContent.trim(),
+        createdAt: Date.now(),
+        likes: 0,
+        likedBy: [],
+        isAdmin: true,
+        replyToId: null,
+        replyToName: null,
+        replyToContent: null,
+      };
+      await updateDoc(doc(db, "comments", commentId), {
+        replies: arrayUnion(newReply),
+      });
+      triggerToast("Đã gửi phản hồi!", "success");
+      setReplyingTo(null);
+      setReplyContent("");
+    } catch {
+      triggerToast("Lỗi khi gửi phản hồi!", "error");
+    } finally {
+      setIsReplyLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -543,14 +618,16 @@ export default function Admin() {
           <div className="relative flex w-full md:w-auto justify-between md:justify-start bg-slate-900 p-1 rounded-lg border border-white/10 mt-2 md:mt-0 mb-[0px] md:mb-0 items-center self-start md:self-auto">
             {/* Sliding background */}
             <motion.div
-              className="absolute top-1 bottom-1 w-[calc(33.333%-3px)] rounded-md bg-amber-500 left-1"
+              className="absolute top-1 bottom-1 w-[calc(25%-3px)] rounded-md bg-amber-500 left-1"
               animate={{
                 x:
                   activeTab === "overview"
                     ? 0
                     : activeTab === "episodes"
                       ? "calc(100% + 2px)"
-                      : "calc(200% + 4px)",
+                      : activeTab === "products"
+                        ? "calc(200% + 4px)"
+                        : "calc(300% + 6px)",
               }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             />
@@ -594,6 +671,20 @@ export default function Admin() {
               <Package className="w-4 h-4" />
               <span className="hidden md:inline whitespace-nowrap">
                 Sản Phẩm
+              </span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("comments");
+                resetForm();
+                setSearchQuery("");
+              }}
+              className={`relative z-10 flex-1 justify-center flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-colors duration-200 ${activeTab === "comments" ? "text-slate-900" : "text-slate-400 hover:text-white"}`}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden md:inline whitespace-nowrap">
+                Bình Luận
               </span>
             </button>
           </div>
@@ -1036,6 +1127,201 @@ export default function Admin() {
                 </p>
               </div>
             </div>
+          </motion.div>
+        ) : activeTab === "comments" ? (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-amber-500" />
+                Quản lý bình luận
+                <span className="text-sm font-normal text-slate-500">
+                  ({comments.length})
+                </span>
+              </h2>
+              <div className="relative w-64">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm..."
+                  className="w-full bg-slate-900 text-sm text-white border border-white/10 py-2 pl-9 pr-4 rounded-lg outline-none focus:ring-2 focus:ring-amber-500"
+                  value={commentSearch}
+                  onChange={(e) => setCommentSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {comments
+              .filter(
+                (c) =>
+                  !commentSearch.trim() ||
+                  c.name.toLowerCase().includes(commentSearch.toLowerCase()) ||
+                  c.content.toLowerCase().includes(commentSearch.toLowerCase()),
+              )
+              .map((comment) => (
+                <div
+                  key={comment.id}
+                  className={`bg-slate-950 rounded-2xl border p-5 ${
+                    comment.pinned
+                      ? "border-amber-500/30 bg-amber-500/5"
+                      : "border-white/5"
+                  }`}
+                >
+                  {comment.pinned && (
+                    <p className="text-[10px] text-amber-500 font-bold mb-2">
+                      📌 Được ghim
+                    </p>
+                  )}
+
+                  <div className="flex gap-3">
+                    {/* Avatar */}
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0 border border-white/10"
+                      style={{
+                        background: comment.isAdmin ? "#7c3aed" : "#0e7490",
+                      }}
+                    >
+                      {comment.name.slice(0, 2).toUpperCase()}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="text-sm font-semibold text-white">
+                          {comment.name}
+                        </span>
+                        {comment.isAdmin && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-extrabold bg-red-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">
+                            <Shield className="w-2.5 h-2.5" /> ADMIN
+                          </span>
+                        )}
+                        <span className="text-xs text-slate-500">
+                          {(() => {
+                            const diff = Date.now() - comment.createdAt;
+                            const m = Math.floor(diff / 60000);
+                            if (m < 1) return "vừa xong";
+                            if (m < 60) return `${m} phút trước`;
+                            const h = Math.floor(m / 60);
+                            if (h < 24) return `${h} giờ trước`;
+                            return `${Math.floor(h / 24)} ngày trước`;
+                          })()}
+                        </span>
+                        <span className="ml-auto text-xs text-slate-500 flex items-center gap-1">
+                          ❤️ {comment.likes}
+                        </span>
+                      </div>
+
+                      <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+                        {comment.content}
+                      </p>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 mt-3 flex-wrap">
+                        <button
+                          onClick={() =>
+                            setReplyingTo(
+                              replyingTo === comment.id ? null : comment.id,
+                            )
+                          }
+                          className="flex items-center gap-1.5 text-xs font-semibold text-amber-500 border border-amber-500/30 px-3 py-1.5 rounded-lg hover:bg-amber-500/10 transition-colors"
+                        >
+                          <Reply className="w-3.5 h-3.5" />
+                          Trả lời
+                        </button>
+                        <button
+                          onClick={() => handleAdminDeleteComment(comment.id)}
+                          className="flex items-center gap-1.5 text-xs font-semibold text-red-400 border border-red-400/25 px-3 py-1.5 rounded-lg hover:bg-red-400/10 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Xóa
+                        </button>
+                        {comment.replies?.length > 0 && (
+                          <span className="text-xs text-slate-500">
+                            💬 {comment.replies.length} phản hồi
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Reply form */}
+                      {replyingTo === comment.id && (
+                        <div className="mt-3 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
+                          <p className="text-xs text-amber-500 font-bold flex items-center gap-1 mb-2">
+                            <Shield className="w-3 h-3" />
+                            Đang phản hồi với tư cách Admin
+                          </p>
+                          <textarea
+                            rows={3}
+                            className="w-full bg-slate-900 text-white text-sm border border-white/10 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                            placeholder="Nhập phản hồi..."
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                          />
+                          <div className="flex justify-end gap-2 mt-2">
+                            <button
+                              onClick={() => {
+                                setReplyingTo(null);
+                                setReplyContent("");
+                              }}
+                              className="text-xs px-3 py-1.5 rounded-lg text-slate-400 border border-white/10 hover:text-white transition-colors"
+                            >
+                              Huỷ
+                            </button>
+                            <button
+                              onClick={() => handleAdminReply(comment.id)}
+                              disabled={isReplyLoading || !replyContent.trim()}
+                              className="text-xs px-4 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold disabled:opacity-50 hover:bg-amber-400 transition-colors flex items-center gap-1"
+                            >
+                              {isReplyLoading ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Check className="w-3 h-3" />
+                              )}
+                              Gửi
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Existing replies */}
+                      {comment.replies?.length > 0 && (
+                        <div className="mt-3 ml-2 space-y-2 border-l-2 border-amber-500/15 pl-3">
+                          {comment.replies.map((reply: any) => (
+                            <div key={reply.id} className="flex gap-2">
+                              <div
+                                className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] text-white shrink-0 border border-white/10"
+                                style={{
+                                  background: reply.isAdmin
+                                    ? "#7c3aed"
+                                    : "#0891b2",
+                                }}
+                              >
+                                {reply.name.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div className="flex-1 bg-slate-900 rounded-lg px-3 py-2">
+                                <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                                  <span className="text-xs font-semibold text-white">
+                                    {reply.name}
+                                  </span>
+                                  {reply.isAdmin && (
+                                    <span className="inline-flex items-center gap-0.5 text-[8px] font-extrabold bg-red-500 text-white px-1.5 py-0.5 rounded-full uppercase">
+                                      <Shield className="w-2 h-2" /> ADMIN
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed">
+                                  {reply.content}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

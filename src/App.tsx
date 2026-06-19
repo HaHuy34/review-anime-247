@@ -16,7 +16,10 @@ import {
   LockOpen,
   ChevronDown,
   Eye,
+  MessageCircle,
 } from "lucide-react";
+
+import CommentsPage from "@/src/components/CommentsPage";
 
 import { initialAnimeData } from "@/src/data";
 import { AnimeSeries } from "@/src/types";
@@ -79,11 +82,11 @@ function UnlockModal({
         </button>
 
         <h2 className="font-display text-xl sm:text-2xl font-black mb-2 text-amber-500">
-          MỘT VÀI MẪU ĐẸP DÀNH CHO BẠN
+          MỘT VÀI MẪU ĐẸP TRONG TRANG
         </h2>
-        <p className="text-sm opacity-80 mb-6">
+        {/* <p className="text-sm opacity-80 mb-6">
           Có thể bạn sẽ thích các sản phẩm này
-        </p>
+        </p> */}
 
         {confirmingTimer !== null ? (
           <div className="py-8 flex flex-col items-center justify-center min-h-[160px]">
@@ -273,11 +276,57 @@ function DonateModal({
   );
 }
 
+// Marquee chạy tên sản phẩm liên tục, thay cho text "(SHOPEE)"
+function ProductNameMarquee({
+  products,
+  theme,
+}: {
+  products: any[];
+  theme: "dark" | "light";
+}) {
+  if (!products || products.length === 0) return null;
+
+  const names = products.map((p) => p.name).filter(Boolean);
+  // Nhân đôi danh sách để tạo loop liền mạch (translateX -50%)
+  const loopNames = [...names, ...names];
+  const duration = Math.max(names.length * 4, 10); // chạy chậm, tỉ lệ theo số sản phẩm
+
+  return (
+    <div className="sm:hidden relative overflow-hidden w-full w-full sm:max-w-[320px] h-6">
+      <div
+        className="absolute top-1 left-0 flex whitespace-nowrap will-change-transform"
+        style={{
+          animation: `productMarqueeScroll ${duration}s linear infinite`,
+        }}
+      >
+        {loopNames.map((name, i) => (
+          <span
+            key={i}
+            className={`inline-flex items-center text-xs sm:text-sm font-bold uppercase tracking-wide shrink-0 ${
+              theme === "dark" ? "text-amber-400" : "text-[#ee4d2d]"
+            }`}
+          >
+            {name}
+            <span className="mx-2 opacity-70 text-[10px] sm:text-xs">✨🐲</span>
+          </span>
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes productMarqueeScroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function App() {
   const MotionDiv = motion.div as any;
   const MotionButton = motion.button as any;
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [view, setView] = useState<"home" | "episodes">("home");
+  const [view, setView] = useState<"home" | "episodes" | "comments">("home");
   const [movies, setMovies] = useState<AnimeSeries[]>(initialAnimeData);
   const [products, setProducts] = useState<any[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<AnimeSeries | null>(null);
@@ -807,13 +856,14 @@ export default function App() {
                   className="text-amber-500 font-semibold tracking-wide flex items-center justify-center gap-1.5 animate-bobble mt-[20px]"
                 >
                   <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span>Dragon Ball Decord Siêu Đẹp 👇</span>
+                  {/* <span>Dragon Ball Decord Siêu Đẹp 👇</span> */}
+                  <span>Cảm ơn cả nhà đã ghé thăm 👇</span>
                 </p>
               </div>
             </section>
 
             {/* Shopee Products Section */}
-            <section className="max-w-xl mx-auto">
+            <section className="hidden max-w-xl mx-auto">
               <div
                 className={`p-6 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
               >
@@ -988,7 +1038,14 @@ export default function App() {
                   className={`p-6 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
                 >
                   <h3 className="font-display text-xl text-[#ee4d2d] font-black pb-4 mb-4 border-b-2 border-dashed border-[#ee4d2d]/20 flex items-center gap-2">
-                    <span className="text-2xl">🛍️</span> GÓC MUA SẮM (SHOPEE)
+                    <span className="text-2xl">🛍️</span>{" "}
+                    <span className="hidden  sm:inline text-2xl">
+                      GÓC MUA SẮM
+                    </span>
+                    <ProductNameMarquee
+                      products={randomHomeProducts}
+                      theme={theme}
+                    />
                   </h3>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -1060,7 +1117,6 @@ export default function App() {
             )}
           </div>
         )}
-
         {view === "episodes" && selectedMovie && (
           <div className="space-y-8 text-left">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1250,6 +1306,34 @@ ${
             )}
           </div>
         )}
+        {/* {/* // Thêm tab navigation */}
+        {view !== "comments" && (
+          <div className="max-w-xl mx-auto mt-8">
+            <button
+              onClick={() => setView("comments")}
+              className="
+        w-full
+        flex items-center justify-center gap-3
+        px-5 py-4
+        rounded-2xl
+        bg-[#0c0c14]
+        border border-white/5
+        hover:border-amber-500/50
+        hover:-translate-y-1
+        transition-all
+        cursor-pointer
+        animate-gentle-sway
+      "
+            >
+              <MessageCircle className="w-5 h-5 text-amber-500" />
+              <span className="font-bold uppercase tracking-wide">
+                Thảo luận cùng cộng đồng
+              </span>
+            </button>
+          </div>
+        )}
+        {/* // Thêm view */}
+        {view === "comments" && <CommentsPage theme={theme} />}
       </main>
       <AnimatePresence>
         {showScrollBtn && (
@@ -1305,7 +1389,7 @@ ${
             Review Anime 24/7 • Dragon Ball Series
           </p>
           <p className="text-[10px] font-mono text-slate-600">
-            Phiên Bản 1.4.0 • 2026 UTC
+            Dragon Ball Anime Hub • Huy Ha
           </p>
         </div>
       </footer>
