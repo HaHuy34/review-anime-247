@@ -491,8 +491,8 @@ function CommentCard({
                       <div className="flex items-center flex-wrap gap-1.5 mb-0.5">
                         <span className="font-bold text-xs">{reply.name}</span>
                         {reply.isAdmin && (
-                          <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold bg-red-500 text-white px-1.5 py-0.5 rounded-full uppercase tracking-wide">
-                            <Shield className="w-2 h-2" /> ADMIN
+                          <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold bg-red-500 text-white px-1.5 py-0.5 rounded-full tracking-wide">
+                            <Shield className="w-2 h-2" /> Admin
                           </span>
                         )}
                         <span
@@ -876,7 +876,7 @@ export default function CommentsPage({ theme }: { theme: "dark" | "light" }) {
           </span>
         </div>
 
-        <div className="flex justify-between items-center mt-3">
+        <div className="flex justify-end items-center mt-3">
           {/* <p
             className={`text-[11px] ${theme === "dark" ? "text-slate-600" : "text-slate-400"}`}
           >

@@ -1311,19 +1311,22 @@ ${
           <div className="max-w-xl mx-auto mt-8">
             <button
               onClick={() => setView("comments")}
-              className="
-        w-full
-        flex items-center justify-center gap-3
-        px-5 py-4
-        rounded-2xl
-        bg-[#0c0c14]
-        border border-white/5
-        hover:border-amber-500/50
-        hover:-translate-y-1
-        transition-all
-        cursor-pointer
-        animate-gentle-sway
-      "
+              className={`
+    w-full
+    flex items-center justify-center gap-3
+    px-5 py-4
+    rounded-2xl
+    hover:border-amber-500/50
+    hover:-translate-y-1
+    transition-all
+    cursor-pointer
+    animate-gentle-sway
+    ${
+      theme === "dark"
+        ? "bg-[#0c0c14] border border-white/5 text-white"
+        : "bg-white border border-slate-200 text-slate-900"
+    }
+  `}
             >
               <MessageCircle className="w-5 h-5 text-amber-500" />
               <span className="font-bold uppercase tracking-wide">

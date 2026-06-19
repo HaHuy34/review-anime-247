@@ -219,7 +219,7 @@ export default function Admin() {
       const { db } = await import("@/src/firebase/config");
       const newReply = {
         id: Math.random().toString(36).slice(2),
-        name: "Admin",
+        name: "Anh Rau",
         avatar: null,
         content: replyContent.trim(),
         createdAt: Date.now(),
@@ -1194,7 +1194,7 @@ export default function Admin() {
                         </span>
                         {comment.isAdmin && (
                           <span className="inline-flex items-center gap-1 text-[9px] font-extrabold bg-red-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">
-                            <Shield className="w-2.5 h-2.5" /> ADMIN
+                            <Shield className="w-2.5 h-2.5" /> Admin
                           </span>
                         )}
                         <span className="text-xs text-slate-500">
@@ -1305,8 +1305,8 @@ export default function Admin() {
                                     {reply.name}
                                   </span>
                                   {reply.isAdmin && (
-                                    <span className="inline-flex items-center gap-0.5 text-[8px] font-extrabold bg-red-500 text-white px-1.5 py-0.5 rounded-full uppercase">
-                                      <Shield className="w-2 h-2" /> ADMIN
+                                    <span className="inline-flex items-center gap-0.5 text-[8px] font-extrabold bg-red-500 text-white px-1.5 py-0.5 rounded-full">
+                                      <Shield className="w-2 h-2" /> Admin
                                     </span>
                                   )}
                                 </div>
