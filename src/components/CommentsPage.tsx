@@ -10,6 +10,7 @@ import {
   Camera,
   Reply,
   Trash2,
+  Smile,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -24,6 +25,7 @@ export interface Comment {
   likes: number;
   likedBy: string[];
   reactions: Record<string, string[]>;
+  adminReaction?: string | null; // NEW: icon Admin chủ động thả lên bình luận
   replies: ReplyItem[];
   isAdmin?: boolean;
   pinned?: boolean;
@@ -49,6 +51,9 @@ export interface ReplyItem {
 // ─────────────────────────────────────────────
 const EMOJI_LIST = ["👍", "❤️", "👀", "😂", "😮", "😢", "🤬"];
 const SESSION_KEY = "ra247_session_id";
+// Admin chỉ có 1 nên dùng avatar cố định cho mọi bình luận/phản hồi của Admin
+const ADMIN_AVATAR_URL =
+  "https://scontent.fhan2-5.fna.fbcdn.net/v/t39.30808-1/709863882_122095903413352638_3815257389828996505_n.jpg?stp=c210.0.540.540a_dst-jpg_tt6&cstp=mx540x540&ctp=s200x200&_nc_cat=109&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=34b49m3YG08Q7kNvwGreQHq&_nc_oc=Adq5JSvANVDGkwG-CCC91Va_tjQGJK34QpKabnmeSVjKVoJafc0bMuVyOuEyVKHp7aU&_nc_zt=24&_nc_ht=scontent.fhan2-5.fna&_nc_gid=W7BOND3qsdVLFX_eW_CGJQ&_nc_ss=7b2a8&oh=00_Af-t7M8Un-97O-MiMtB2yh2DoGmaRb68iEZJF_lRL3wrzg&oe=6A3BE4FA";
 
 function getSessionId(): string {
   if (typeof window === "undefined") return "";
@@ -229,18 +234,26 @@ function ReplyForm({
       )}
       <div className="flex items-center gap-2 mb-2">
         <div
-          className="relative cursor-pointer"
-          onClick={() => fileRef.current?.click()}
+          className={`relative ${isAdmin ? "" : "cursor-pointer"}`}
+          onClick={() => !isAdmin && fileRef.current?.click()}
         >
-          <Avatar src={avatar} name={name || "?"} size={30} />
-          <Camera className="w-3 h-3 absolute -bottom-0.5 -right-0.5 bg-amber-500 rounded-full p-0.5 text-white" />
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleAvatarChange}
+          <Avatar
+            src={isAdmin ? ADMIN_AVATAR_URL : avatar}
+            name={name || "?"}
+            size={30}
           />
+          {!isAdmin && (
+            <>
+              <Camera className="w-3 h-3 absolute -bottom-0.5 -right-0.5 bg-amber-500 rounded-full p-0.5 text-white" />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+            </>
+          )}
         </div>
         <input
           value={name}
@@ -292,6 +305,8 @@ function CommentCard({
   onReply,
   onDelete,
   onLikeReply,
+  onAdminReact,
+  onTogglePin,
 }: {
   comment: Comment;
   theme: "dark" | "light";
@@ -302,10 +317,13 @@ function CommentCard({
   onReply: (commentId: string, reply: Omit<ReplyItem, "id">) => Promise<void>;
   onDelete: (id: string) => void;
   onLikeReply: (commentId: string, replyId: string) => void;
+  onAdminReact?: (id: string, emoji: string) => void;
+  onTogglePin?: (id: string, currentlyPinned: boolean) => void;
 }) {
   const [showReplies, setShowReplies] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showAdminReactPicker, setShowAdminReactPicker] = useState(false);
   // NEW: which reply (if any) the open reply-form is quoting. null = replying to the root comment.
   const [quoteTarget, setQuoteTarget] = useState<{
     id: string;
@@ -343,7 +361,11 @@ function CommentCard({
       )}
 
       <div className="flex gap-3">
-        <Avatar src={comment.avatar} name={comment.name} size={38} />
+        <Avatar
+          src={comment.isAdmin ? ADMIN_AVATAR_URL : comment.avatar}
+          name={comment.name}
+          size={38}
+        />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center flex-wrap gap-1.5 mb-1">
@@ -358,14 +380,84 @@ function CommentCard({
             >
               {timeAgo(comment.createdAt)}
             </span>
+
+            {/* Icon Admin đã thả — mọi người đều thấy */}
+            {comment.adminReaction && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-400">
+                <span className="text-sm leading-none">
+                  {comment.adminReaction}
+                </span>
+                từ Admin
+              </span>
+            )}
+
             {isAdmin && (
-              <button
-                onClick={() => onDelete(comment.id)}
-                className="ml-auto text-red-400 hover:text-red-300 cursor-pointer transition-colors"
-                title="Xoá bình luận"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              <div className="ml-auto flex items-center gap-2.5 relative">
+                {/* Ghim / bỏ ghim — chỉ admin thấy */}
+                {onTogglePin && (
+                  <button
+                    onClick={() => onTogglePin(comment.id, !!comment.pinned)}
+                    className={`cursor-pointer transition-colors text-xs ${
+                      comment.pinned
+                        ? "text-amber-400"
+                        : theme === "dark"
+                          ? "text-slate-400 hover:text-amber-400"
+                          : "text-slate-500 hover:text-amber-500"
+                    }`}
+                    title={comment.pinned ? "Bỏ ghim" : "Ghim bình luận"}
+                  >
+                    📌
+                  </button>
+                )}
+
+                {/* Nút thả icon — chỉ admin thấy */}
+                <button
+                  onClick={() => setShowAdminReactPicker((v) => !v)}
+                  className={`cursor-pointer transition-colors ${
+                    comment.adminReaction
+                      ? "text-rose-400"
+                      : theme === "dark"
+                        ? "text-slate-400 hover:text-rose-400"
+                        : "text-slate-500 hover:text-rose-500"
+                  }`}
+                  title="Admin thả icon"
+                >
+                  <Smile className="w-3.5 h-3.5" />
+                </button>
+
+                {showAdminReactPicker && (
+                  <div
+                    className={`absolute top-full right-0 mt-1.5 flex gap-1 p-1.5 rounded-full border shadow-xl z-20 ${
+                      theme === "dark"
+                        ? "bg-[#13131c] border-white/10"
+                        : "bg-white border-black/10"
+                    }`}
+                  >
+                    {EMOJI_LIST.map((e) => (
+                      <button
+                        key={e}
+                        onClick={() => {
+                          onAdminReact?.(comment.id, e);
+                          setShowAdminReactPicker(false);
+                        }}
+                        className={`text-base leading-none hover:scale-125 transition-transform cursor-pointer rounded-full p-0.5 ${
+                          comment.adminReaction === e ? "bg-rose-500/15" : ""
+                        }`}
+                      >
+                        {e}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  onClick={() => onDelete(comment.id)}
+                  className="text-red-400 hover:text-red-300 cursor-pointer transition-colors"
+                  title="Xoá bình luận"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
           </div>
 
@@ -486,7 +578,11 @@ function CommentCard({
                     id={`reply-${reply.id}`}
                     className="flex gap-2.5"
                   >
-                    <Avatar src={reply.avatar} name={reply.name} size={28} />
+                    <Avatar
+                      src={reply.isAdmin ? ADMIN_AVATAR_URL : reply.avatar}
+                      name={reply.name}
+                      size={28}
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center flex-wrap gap-1.5 mb-0.5">
                         <span className="font-bold text-xs">{reply.name}</span>
@@ -635,6 +731,9 @@ export default function CommentsPage({ theme }: { theme: "dark" | "light" }) {
     setAvatar(resized);
   };
 
+  const COOLDOWN_SEC = 30;
+  const [cooldown, setCooldown] = useState(0);
+
   // ── Submit new comment ──
   const handleSubmit = async () => {
     if (!name.trim() || !content.trim()) return;
@@ -650,11 +749,22 @@ export default function CommentsPage({ theme }: { theme: "dark" | "light" }) {
         likes: 0,
         likedBy: [],
         reactions: {},
+        adminReaction: null,
         replies: [],
         isAdmin,
         pinned: false,
       });
       setContent("");
+      setCooldown(COOLDOWN_SEC);
+      const interval = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     } catch (err) {
       console.error(err);
     }
@@ -688,6 +798,27 @@ export default function CommentsPage({ theme }: { theme: "dark" | "light" }) {
       [`reactions.${emoji}`]: hasReacted
         ? arrayRemove(sessionId)
         : arrayUnion(sessionId),
+    });
+  };
+
+  // ── Admin thả / bỏ icon trên 1 bình luận ──
+  const handleAdminReact = async (id: string, emoji: string) => {
+    const { doc, updateDoc } = await import("firebase/firestore");
+    const { db } = await import("@/src/firebase/config");
+    const comment = comments.find((c) => c.id === id);
+    if (!comment) return;
+    const nextValue = comment.adminReaction === emoji ? null : emoji;
+    await updateDoc(doc(db, "comments", id), {
+      adminReaction: nextValue,
+    });
+  };
+
+  // ── Ghim / bỏ ghim bình luận ──
+  const handleTogglePin = async (id: string, currentlyPinned: boolean) => {
+    const { doc, updateDoc } = await import("firebase/firestore");
+    const { db } = await import("@/src/firebase/config");
+    await updateDoc(doc(db, "comments", id), {
+      pinned: !currentlyPinned,
     });
   };
 
@@ -835,18 +966,26 @@ export default function CommentsPage({ theme }: { theme: "dark" | "light" }) {
       >
         <div className="flex gap-3 mb-3">
           <div
-            className="relative cursor-pointer shrink-0"
-            onClick={() => fileRef.current?.click()}
+            className={`relative shrink-0 ${isAdmin ? "" : "cursor-pointer"}`}
+            onClick={() => !isAdmin && fileRef.current?.click()}
           >
-            <Avatar src={avatar} name={name || "?"} size={40} />
-            <Camera className="w-3.5 h-3.5 absolute -bottom-0.5 -right-0.5 bg-amber-500 rounded-full p-0.5 text-white" />
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarChange}
+            <Avatar
+              src={isAdmin ? ADMIN_AVATAR_URL : avatar}
+              name={name || "?"}
+              size={40}
             />
+            {!isAdmin && (
+              <>
+                <Camera className="w-3.5 h-3.5 absolute -bottom-0.5 -right-0.5 bg-amber-500 rounded-full p-0.5 text-white" />
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+              </>
+            )}
           </div>
 
           <div className="flex-1 space-y-2">
@@ -884,11 +1023,17 @@ export default function CommentsPage({ theme }: { theme: "dark" | "light" }) {
           </p> */}
           <button
             onClick={handleSubmit}
-            disabled={submitting || !name.trim() || !content.trim()}
+            disabled={
+              submitting || !name.trim() || !content.trim() || cooldown > 0
+            }
             className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-amber-500 text-slate-950 text-sm font-black disabled:opacity-40 cursor-pointer hover:bg-amber-400 active:scale-95 transition-all"
           >
             <Send className="w-4 h-4" />
-            {submitting ? "Đang gửi..." : "Gửi"}
+            {cooldown > 0
+              ? `Chờ ${cooldown}s`
+              : submitting
+                ? "Đang gửi..."
+                : "Gửi"}
           </button>
         </div>
       </div>
@@ -950,6 +1095,8 @@ export default function CommentsPage({ theme }: { theme: "dark" | "light" }) {
               onReply={handleReply}
               onDelete={handleDelete}
               onLikeReply={handleLikeReply}
+              onAdminReact={handleAdminReact}
+              onTogglePin={handleTogglePin}
             />
           ))}
         </div>

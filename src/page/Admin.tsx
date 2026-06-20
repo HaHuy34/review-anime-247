@@ -49,6 +49,8 @@ import {
   ArrowLeft,
   BarChart,
   Eye,
+  Pin,
+  PinOff,
 } from "lucide-react";
 
 import { onAuthStateChanged } from "firebase/auth";
@@ -89,6 +91,46 @@ const AnimatedCounter = ({ value }: { value: number }) => {
 
   return <>{displayValue}</>;
 };
+
+// Admin chỉ có 1 nên dùng avatar cố định cho mọi bình luận/phản hồi của Admin
+const ADMIN_AVATAR_URL =
+  "https://scontent.fhan2-5.fna.fbcdn.net/v/t39.30808-1/709863882_122095903413352638_3815257389828996505_n.jpg?stp=c210.0.540.540a_dst-jpg_tt6&cstp=mx540x540&ctp=s200x200&_nc_cat=109&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=34b49m3YG08Q7kNvwGreQHq&_nc_oc=Adq5JSvANVDGkwG-CCC91Va_tjQGJK34QpKabnmeSVjKVoJafc0bMuVyOuEyVKHp7aU&_nc_zt=24&_nc_ht=scontent.fhan2-5.fna&_nc_gid=W7BOND3qsdVLFX_eW_CGJQ&_nc_ss=7b2a8&oh=00_Af-t7M8Un-97O-MiMtB2yh2DoGmaRb68iEZJF_lRL3wrzg&oe=6A3BE4FA";
+
+function CommentAvatar({
+  src,
+  name,
+  isAdmin,
+  size = 36,
+}: {
+  src?: string | null;
+  name: string;
+  isAdmin?: boolean;
+  size?: number;
+}) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className="rounded-full object-cover shrink-0 border border-white/10"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  return (
+    <div
+      className="rounded-full flex items-center justify-center font-bold text-white shrink-0 border border-white/10"
+      style={{
+        width: size,
+        height: size,
+        fontSize: size * 0.4,
+        background: isAdmin ? "#7c3aed" : "#0e7490",
+      }}
+    >
+      {name.slice(0, 2).toUpperCase()}
+    </div>
+  );
+}
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -162,6 +204,8 @@ export default function Admin() {
   const [replyContent, setReplyContent] = useState("");
   const [commentSearch, setCommentSearch] = useState("");
   const [isReplyLoading, setIsReplyLoading] = useState(false);
+  const [reactingTo, setReactingTo] = useState<string | null>(null);
+  const ADMIN_EMOJI_LIST = ["👍", "❤️", "👀", "😂", "😮", "😢", "🤬"];
 
   const [toast, setToast] = useState<{
     message: string;
@@ -240,6 +284,45 @@ export default function Admin() {
       triggerToast("Lỗi khi gửi phản hồi!", "error");
     } finally {
       setIsReplyLoading(false);
+    }
+  };
+
+  // Ghim / bỏ ghim bình luận lên đầu trang user
+  const handleTogglePin = async (
+    commentId: string,
+    currentlyPinned: boolean,
+  ) => {
+    try {
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const { db } = await import("@/src/firebase/config");
+      await updateDoc(doc(db, "comments", commentId), {
+        pinned: !currentlyPinned,
+      });
+      triggerToast(
+        !currentlyPinned ? "Đã ghim bình luận!" : "Đã bỏ ghim!",
+        "success",
+      );
+    } catch {
+      triggerToast("Lỗi khi ghim bình luận!", "error");
+    }
+  };
+
+  // Admin thả icon lên bình luận (hiển thị riêng bên user, khác reactions thường)
+  const handleSetAdminReaction = async (
+    commentId: string,
+    emoji: string,
+    currentEmoji?: string | null,
+  ) => {
+    try {
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const { db } = await import("@/src/firebase/config");
+      const nextValue = currentEmoji === emoji ? null : emoji; // bấm lại icon cũ = bỏ icon
+      await updateDoc(doc(db, "comments", commentId), {
+        adminReaction: nextValue,
+      });
+      triggerToast(nextValue ? "Đã thả icon!" : "Đã bỏ icon!", "success");
+    } catch {
+      triggerToast("Lỗi khi thả icon!", "error");
     }
   };
 
@@ -1176,16 +1259,20 @@ export default function Admin() {
                     </p>
                   )}
 
+                  {comment.adminReaction && (
+                    <p className="text-[10px] text-rose-400 font-bold mb-2 flex items-center gap-1">
+                      {comment.adminReaction} Admin đã thả icon
+                    </p>
+                  )}
+
                   <div className="flex gap-3">
                     {/* Avatar */}
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0 border border-white/10"
-                      style={{
-                        background: comment.isAdmin ? "#7c3aed" : "#0e7490",
-                      }}
-                    >
-                      {comment.name.slice(0, 2).toUpperCase()}
-                    </div>
+                    <CommentAvatar
+                      src={comment.isAdmin ? ADMIN_AVATAR_URL : comment.avatar}
+                      name={comment.name}
+                      isAdmin={comment.isAdmin}
+                      size={36}
+                    />
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -1230,6 +1317,67 @@ export default function Admin() {
                           <Reply className="w-3.5 h-3.5" />
                           Trả lời
                         </button>
+
+                        <button
+                          onClick={() =>
+                            handleTogglePin(comment.id, !!comment.pinned)
+                          }
+                          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors border ${
+                            comment.pinned
+                              ? "text-amber-400 border-amber-400/40 bg-amber-400/10 hover:bg-amber-400/20"
+                              : "text-slate-400 border-white/10 hover:text-amber-400 hover:bg-amber-400/10"
+                          }`}
+                        >
+                          {comment.pinned ? (
+                            <PinOff className="w-3.5 h-3.5" />
+                          ) : (
+                            <Pin className="w-3.5 h-3.5" />
+                          )}
+                          {comment.pinned ? "Bỏ ghim" : "Ghim"}
+                        </button>
+
+                        <div className="relative">
+                          <button
+                            onClick={() =>
+                              setReactingTo(
+                                reactingTo === comment.id ? null : comment.id,
+                              )
+                            }
+                            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors border ${
+                              comment.adminReaction
+                                ? "text-rose-400 border-rose-400/30 bg-rose-400/10"
+                                : "text-slate-400 border-white/10 hover:text-rose-400 hover:bg-rose-400/10"
+                            }`}
+                          >
+                            <span>{comment.adminReaction || "😊"}</span>
+                            {comment.adminReaction ? "Đã thả icon" : "Thả icon"}
+                          </button>
+                          {reactingTo === comment.id && (
+                            <div className="absolute z-20 top-full mt-1 left-0 flex gap-1 p-2 rounded-xl border border-white/10 bg-slate-900 shadow-2xl">
+                              {ADMIN_EMOJI_LIST.map((e) => (
+                                <button
+                                  key={e}
+                                  onClick={() => {
+                                    handleSetAdminReaction(
+                                      comment.id,
+                                      e,
+                                      comment.adminReaction,
+                                    );
+                                    setReactingTo(null);
+                                  }}
+                                  className={`text-lg hover:scale-125 transition-transform cursor-pointer rounded-lg p-1 ${
+                                    comment.adminReaction === e
+                                      ? "bg-amber-500/20"
+                                      : ""
+                                  }`}
+                                >
+                                  {e}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
                         <button
                           onClick={() => handleAdminDeleteComment(comment.id)}
                           className="flex items-center gap-1.5 text-xs font-semibold text-red-400 border border-red-400/25 px-3 py-1.5 rounded-lg hover:bg-red-400/10 transition-colors"
@@ -1289,16 +1437,16 @@ export default function Admin() {
                         <div className="mt-3 ml-2 space-y-2 border-l-2 border-amber-500/15 pl-3">
                           {comment.replies.map((reply: any) => (
                             <div key={reply.id} className="flex gap-2">
-                              <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] text-white shrink-0 border border-white/10"
-                                style={{
-                                  background: reply.isAdmin
-                                    ? "#7c3aed"
-                                    : "#0891b2",
-                                }}
-                              >
-                                {reply.name.slice(0, 2).toUpperCase()}
-                              </div>
+                              <CommentAvatar
+                                src={
+                                  reply.isAdmin
+                                    ? ADMIN_AVATAR_URL
+                                    : reply.avatar
+                                }
+                                name={reply.name}
+                                isAdmin={reply.isAdmin}
+                                size={24}
+                              />
                               <div className="flex-1 bg-slate-900 rounded-lg px-3 py-2">
                                 <div className="flex items-center gap-1.5 flex-wrap mb-1">
                                   <span className="text-xs font-semibold text-white">
