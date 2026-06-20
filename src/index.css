@@ -111,8 +111,8 @@
 }
 
 .sm\:hidden.absolute.-top-10.-right-16.flex.flex-col.items-end {
-  top: -21px;
-  right: -73px;
+  top: -3px;
+  right: -80px;
 }
 
 @keyframes cloudFloat {

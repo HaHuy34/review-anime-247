@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { X, Sparkles, Tv, AlertCircle } from "lucide-react";
+import { X, Sparkles, Tv, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { AnimeSeries, DbEpisode } from "@/src/types";
 
 interface VideoModalProps {
@@ -74,6 +74,13 @@ export default function VideoModal({
 
   const [slowLoadWarning, setSlowLoadWarning] = useState(false);
   const slowLoadTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Chế độ xem đơn giản: ẩn header + footer, chỉ giữ lại video
+  const [isSimpleMode, setIsSimpleMode] = useState<boolean>(false);
+
+  // Gợi ý "Chế độ đơn giản" cho người dùng chưa biết tính năng này
+  const [showSimpleModeHint, setShowSimpleModeHint] = useState<boolean>(false);
+  const simpleModeHintTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const durationsRef = useRef<{ [key: string]: number }>({});
 
@@ -158,6 +165,33 @@ export default function VideoModal({
     triggerNotification,
   ]);
 
+  useEffect(() => {
+    // Chỉ gợi ý khi modal vừa mở và người dùng chưa bật chế độ đơn giản
+    if (!isSimpleMode) {
+      setShowSimpleModeHint(true);
+      simpleModeHintTimerRef.current = setTimeout(() => {
+        setShowSimpleModeHint(false);
+      }, 4500);
+    }
+
+    return () => {
+      if (simpleModeHintTimerRef.current)
+        clearTimeout(simpleModeHintTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const activeThumb = document.getElementById(
+      `episode-thumb-${currentIndex}`,
+    );
+    activeThumb?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }, [currentIndex]);
+
   const handleNext = () => {
     if (currentIndex < validEpisodes.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -198,33 +232,82 @@ export default function VideoModal({
       />
 
       <div className="relative w-full max-w-4xl bg-slate-950 border border-slate-800/80 rounded-2xl overflow-hidden shadow-2xl z-10 transition-transform duration-300 scale-100 flex flex-col">
-        <div className="p-4 bg-slate-900/60 border-b border-slate-850 flex items-center justify-between text-left">
-          <div className="flex items-center gap-2">
-            <div className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg border border-amber-500/25">
-              <Tv className="w-4 h-4" />
+        {!isSimpleMode && (
+          <div className="p-4 bg-slate-900/60 border-b border-slate-850 flex items-center justify-between text-left">
+            <div className="flex items-center gap-2">
+              <div className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg border border-amber-500/25">
+                <Tv className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono text-amber-500 uppercase tracking-widest font-extrabold flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 animate-pulse" /> Đang phát Anime
+                </span>
+                <h3 className="text-white font-bold text-sm sm:text-base tracking-tight truncate max-w-md sm:max-w-xl">
+                  {series.vietnameseTitle || series.title} •{" "}
+                  {currentEpisodeDetails.name}
+                </h3>
+              </div>
             </div>
-            <div>
-              <span className="text-[10px] font-mono text-amber-500 uppercase tracking-widest font-extrabold flex items-center gap-1">
-                <Sparkles className="w-3 h-3 animate-pulse" /> Đang phát Anime
-              </span>
-              <h3 className="text-white font-bold text-sm sm:text-base tracking-tight truncate max-w-md sm:max-w-xl">
-                {series.vietnameseTitle || series.title} •{" "}
-                {currentEpisodeDetails.name}
-              </h3>
+
+            <div className="flex items-center gap-1">
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setIsSimpleMode(true);
+                    setShowSimpleModeHint(false);
+                    if (simpleModeHintTimerRef.current)
+                      clearTimeout(simpleModeHintTimerRef.current);
+                  }}
+                  className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  title="Chế độ xem đơn giản"
+                  id="simple-mode-btn"
+                >
+                  <EyeOff className="w-4 h-4" />
+                </button>
+
+                {showSimpleModeHint && (
+                  <div className="absolute top-full right-0 mt-2 z-40">
+                    <div className="absolute -top-1.5 right-3 w-3 h-3 bg-amber-500 rotate-45 animate-bounce" />
+                    <div className="bg-amber-500 text-slate-950 text-xs font-bold rounded-lg px-3 py-2 whitespace-nowrap shadow-xl">
+                      Thử chế độ xem đơn giản tại đây!
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={onClose}
+                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                title="Đóng trình phát"
+                id="close-modal-btn"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
-
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
-            title="Đóng trình phát"
-            id="close-modal-btn"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        )}
 
         <div className="relative w-full aspect-video min-h-[340px] sm:min-h-[420px] bg-black overflow-hidden">
+          {isSimpleMode && (
+            <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5">
+              <button
+                onClick={() => setIsSimpleMode(false)}
+                className="p-2 bg-slate-950/70 hover:bg-slate-900 backdrop-blur-sm rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer"
+                title="Hiện giao diện đầy đủ"
+                id="exit-simple-mode-btn"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onClose}
+                className="p-2 bg-slate-950/70 hover:bg-slate-900 backdrop-blur-sm rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer"
+                title="Đóng trình phát"
+                id="close-modal-simple-btn"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <div
             className="flex w-full h-full transition-transform duration-500 ease-out"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -322,18 +405,45 @@ export default function VideoModal({
           )}
         </div>
 
-        <div className="p-3 bg-slate-900/30 border-t border-slate-905 flex items-center justify-between text-xs text-slate-400 font-mono">
-          <span>
-            Tổng số tập có video:{" "}
-            <strong className="text-white">{validEpisodes.length} Tập</strong>
-          </span>
-          <span>
-            Tập đang xem:{" "}
-            <strong className="text-amber-500">
-              {currentIndex + 1} / {validEpisodes.length}
-            </strong>
-          </span>
-        </div>
+        {!isSimpleMode && (
+          <div className="p-3 bg-slate-900/30 border-t border-slate-905">
+            <div className="flex items-center justify-between mb-2 text-xs text-slate-400 font-mono">
+              <span>Danh sách tập</span>
+              <span>
+                Tổng:{" "}
+                <strong className="text-white">
+                  {validEpisodes.length} Tập
+                </strong>
+              </span>
+            </div>
+            <div
+              className="flex items-center gap-2 overflow-x-auto pb-1"
+              style={{ scrollbarWidth: "thin" }}
+            >
+              {validEpisodes.map((ep: any, index: any) => {
+                const isActive = index === currentIndex;
+                return (
+                  <button
+                    key={index}
+                    id={`episode-thumb-${index}`}
+                    onClick={() => {
+                      setCurrentIndex(index);
+                      setShowSuggestion(false);
+                    }}
+                    title={ep.name}
+                    className={`shrink-0 min-w-[44px] h-9 px-3 rounded-lg text-xs font-bold font-mono border transition-colors cursor-pointer ${
+                      isActive
+                        ? "bg-amber-500/15 border-amber-500 text-amber-400"
+                        : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white"
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

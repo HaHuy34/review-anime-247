@@ -11,7 +11,7 @@ export const initialAnimeData: AnimeSeries[] = [
   {
     id: "Dragon Ball (1986)",
     title: "Dragon Ball (1986)",
-    vietnameseTitle: "Bảy Viên Ngọc Rồng",
+    vietnameseTitle: "Dragon Ball (1986)",
     subtitle: "Khởi nguyên (153 tập)",
     epCount: 153,
     orderNum: 1,
@@ -27,7 +27,7 @@ export const initialAnimeData: AnimeSeries[] = [
   {
     id: "Dragon Ball Z (1989)",
     title: "Dragon Ball Z (1989)",
-    vietnameseTitle: "Bảy Viên Ngọc Rồng Z",
+    vietnameseTitle: "Dragon Ball Z (1989)",
     subtitle: "Kỷ nguyên DBZ (Tập 99 -> Tập 167)",
     epCount: 167,
     orderNum: 2,
@@ -43,7 +43,7 @@ export const initialAnimeData: AnimeSeries[] = [
   {
     id: "Dragon Ball Daima",
     title: "Dragon Ball Daima",
-    vietnameseTitle: "Bảy Viên Ngọc Rồng Daima",
+    vietnameseTitle: "Dragon Ball Daima",
     subtitle: "Cuộc phiêu lưu mới (20 tập)",
     epCount: 20,
     orderNum: 6,
@@ -60,7 +60,7 @@ export const initialAnimeData: AnimeSeries[] = [
   {
     id: "Dragon Ball Super (2015)",
     title: "Dragon Ball Super (2015)",
-    vietnameseTitle: "Bảy Viên Ngọc Rồng Siêu Cấp",
+    vietnameseTitle: "Dragon Ball Super (2015)",
     subtitle: "Kỷ nguyên Thần (131 tập)",
     epCount: 131,
     orderNum: 3,
@@ -76,7 +76,7 @@ export const initialAnimeData: AnimeSeries[] = [
   {
     id: "Dragon Ball Super: Broly",
     title: "Dragon Ball Super: Broly",
-    vietnameseTitle: "Bảy Viên Ngọc Rồng Siêu Cấp: Broly",
+    vietnameseTitle: "Dragon Ball Super: Broly",
     subtitle: "Movie Canon",
     epCount: 1,
     orderNum: 4,
@@ -92,7 +92,7 @@ export const initialAnimeData: AnimeSeries[] = [
   {
     id: "Dragon Ball Super: Super Hero",
     title: "Dragon Ball Super: Super Hero",
-    vietnameseTitle: "Bảy Viên Ngọc Rồng Siêu Cấp: Super Hero",
+    vietnameseTitle: "Dragon Ball Super: Super Hero",
     subtitle: "Movie Canon",
     epCount: 1,
     orderNum: 5,
@@ -108,7 +108,7 @@ export const initialAnimeData: AnimeSeries[] = [
   {
     id: "Dragon Ball GT",
     title: "Dragon Ball GT",
-    vietnameseTitle: "Bảy Viên Ngọc Rồng GT",
+    vietnameseTitle: "Dragon Ball GT",
     subtitle: "Ngoại truyện (64 tập)",
     epCount: 64,
     orderNum: 7,
