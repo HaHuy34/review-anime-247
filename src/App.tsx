@@ -279,9 +279,9 @@ function TabNav({
       ? TABS.filter((t) => t.key === "shop")
       : TABS;
 
-  // Option 1: khóa Xem Phim + Bình Luận
+  // Option 1: khóa CHỈ Xem Phim (Bình Luận và Sản Phẩm vẫn hoạt động)
   const isTabLocked = (key: MainTab) =>
-    lockOption === LOCK_OPTION.LOCKED && key !== "shop";
+    lockOption === LOCK_OPTION.LOCKED && key === "watch";
 
   const goTab = (key: MainTab) => {
     if (isTabLocked(key)) {
@@ -595,15 +595,13 @@ export default function App() {
     return () => unsub?.();
   }, []);
 
-  // Nếu đang ở tab bị khóa/ẩn mà Admin đổi chế độ -> tự đẩy về tab Sản Phẩm
   useEffect(() => {
-    if (
-      (lockOption === LOCK_OPTION.LOCKED ||
-        lockOption === LOCK_OPTION.SHOP_ONLY) &&
-      mainTab !== "shop"
-    ) {
+    if (lockOption === LOCK_OPTION.SHOP_ONLY && mainTab !== "shop") {
       setMainTab("shop");
-      setIsModalOpen(false); // đóng luôn video đang phát (nếu có)
+      setIsModalOpen(false);
+    } else if (lockOption === LOCK_OPTION.LOCKED && mainTab === "watch") {
+      setMainTab("shop");
+      setIsModalOpen(false);
     }
   }, [lockOption, mainTab]);
 
@@ -1246,7 +1244,7 @@ export default function App() {
           )}
 
           {/* ════ TAB: 💬 BÌNH LUẬN ════ */}
-          {mainTab === "comments" && lockOption !== LOCK_OPTION.LOCKED && (
+          {mainTab === "comments" && lockOption !== LOCK_OPTION.SHOP_ONLY && (
             <AnimatedTab tabKey="comments">
               <CommentsPage theme={theme} />
             </AnimatedTab>

@@ -1266,11 +1266,11 @@ export default function Admin() {
                     )}
                   </div>
                   <p className="font-bold text-white text-sm mb-1">
-                    Khóa Xem Phim & Bình Luận
+                    Khóa Xem Phim
                   </p>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    2 trang này hiện icon khóa, người dùng không thao tác được.
-                    Trang Sản Phẩm vẫn hoạt động bình thường.
+                    Trang này hiện icon khóa, người dùng không thao tác được.
+                    Trang Sản Phẩm và Bình Luận vẫn hoạt động bình thường.
                   </p>
                 </button>
 
