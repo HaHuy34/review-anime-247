@@ -305,11 +305,11 @@ function TabNav({
     <>
       {/* ── MOBILE: pill bottom bar ── */}
       <nav
-        className={`fixed bottom-2 left-0 right-0 z-40 px-3 pb-[env(safe-area-inset-bottom,8px)] pt-2 sm:hidden
+        className={`fixed bottom-0 left-0 right-0 z-40 px-3 pb-[25px] pt-2 sm:hidden
           ${
             theme === "dark"
-              ? "bg-[#050508]/95 border-t border-white/5"
-              : "bg-[#f8fafc]/95 border-t border-black/8"
+              ? "bg-[#050508]/60 backdrop-blur-xl border-t border-white/5"
+              : "bg-[#f8fafc]/60 backdrop-blur-xl border-t border-black/8"
           } backdrop-blur-md`}
       >
         <div
@@ -892,7 +892,7 @@ export default function App() {
                 {view === "home" && (
                   <div className="space-y-12">
                     {/* Hero */}
-                    <section className="flex flex-col items-center text-center max-w-xl mx-auto space-y-4">
+                    <section className="mb-[23px] flex flex-col items-center text-center max-w-xl mx-auto space-y-4">
                       <div className="relative w-28 h-28 sm:w-32 sm:h-32">
                         <img
                           src="https://giffiles.alphacoders.com/207/207839.gif"
@@ -1030,9 +1030,9 @@ export default function App() {
                     {/* Timeline */}
                     <section ref={dragonBallRef} className="max-w-xl mx-auto">
                       <div
-                        className={`p-6 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
+                        className={`p-[10px] rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
                       >
-                        <h3 className="font-display text-xl text-[#ee4d2d] font-black pb-4 mb-6 border-b-2 border-dashed border-[#ee4d2d]/20 flex items-center gap-2">
+                        <h3 className="flex items-center justify-center font-display text-xl text-[#ee4d2d] font-black pb-4 mb-6 border-b-2 border-dashed border-[#ee4d2d]/20 flex items-center gap-2">
                           <span className="text-2xl text-orange-500">🐲</span>{" "}
                           TRÌNH TỰ XEM DRAGON BALL
                         </h3>
@@ -1188,13 +1188,21 @@ export default function App() {
                                       : "bg-[#0c0c14] border-white/5 hover:border-amber-500/50 hover:-translate-y-1 hover:shadow-lg text-white cursor-pointer"
                                 }`}
                               >
-                                <span className="text-[10px] font-semibold absolute top-2 left-2 pb-1 block text-slate-400">
-                                  Tập
-                                </span>
+                                {episode.name !== "Movie" && (
+                                  <span className="text-[10px] font-semibold absolute top-2 left-2 pb-1 block text-slate-400">
+                                    Tập
+                                  </span>
+                                )}
                                 <span
-                                  className={`font-display text-3xl font-black pb-1 pt-2 block ${isFeatured ? "text-emerald-400" : isAvailable ? "text-white" : "text-inherit"}`}
+                                  className={`font-display pb-1 pt-2 block ${
+                                    episode.name === "Movie"
+                                      ? "text-base font-black"
+                                      : "text-3xl font-black"
+                                  } ${isFeatured ? "text-emerald-400" : isAvailable ? "text-white" : "text-inherit"}`}
                                 >
-                                  {epNumStr}
+                                  {episode.name === "Movie"
+                                    ? "Movie"
+                                    : epNumStr}
                                 </span>
                                 {isAvailable && (
                                   <div className="absolute inset-0 flex items-center justify-center bg-amber-500 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1255,7 +1263,7 @@ export default function App() {
             <AnimatedTab tabKey="shop">
               <div className="space-y-10">
                 {(isLoadingProducts || randomHomeProducts.length > 0) && (
-                  <section className="max-w-xl mx-auto">
+                  <section className="max-w-6xl mx-auto">
                     <div
                       className={`p-6 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
                     >
