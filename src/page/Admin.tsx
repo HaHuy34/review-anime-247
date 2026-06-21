@@ -20,6 +20,9 @@ import {
   Shield,
   ShoppingBag,
   Smartphone,
+  Lock,
+  Unlock,
+  EyeOff,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -35,6 +38,12 @@ import {
   updateProduct,
   Product,
 } from "@/src/services/productService";
+import {
+  getActiveLockOption,
+  updateActiveLockOption,
+  subscribeLockOption,
+  LOCK_OPTION,
+} from "@/src/services/configService";
 import { initialAnimeData } from "@/src/data";
 import {
   Loader2,
@@ -139,7 +148,6 @@ export default function Admin() {
   const [chart7Days, setChart7Days] = useState<
     { date: string; visits: number; clicks: number }[]
   >([]);
-  console.log("chart7Days:", chart7Days);
   const [analytics, setAnalytics] = useState({
     totalViews: 0,
     mobileViews: 0,
@@ -158,6 +166,12 @@ export default function Admin() {
 
   const [isScrolled, setIsScrolled] = useState(false);
 
+  // ── Chế độ khóa/ẩn trang (Option 1/2/3) ──
+  const [lockOption, setLockOptionState] = useState<number>(
+    LOCK_OPTION.UNLOCKED,
+  );
+  const [isUpdatingLock, setIsUpdatingLock] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
@@ -174,6 +188,28 @@ export default function Admin() {
     });
     return () => unsub();
   }, [navigate]);
+
+  // Lắng nghe real-time chế độ khóa/ẩn trang
+  useEffect(() => {
+    if (isAuthChecking) return;
+    const unsub = subscribeLockOption(setLockOptionState);
+    return () => unsub();
+  }, [isAuthChecking]);
+
+  const handleChangeLockOption = async (optionNum: number) => {
+    if (optionNum === lockOption || isUpdatingLock) return;
+    setIsUpdatingLock(true);
+    try {
+      const ok = await updateActiveLockOption(optionNum);
+      if (ok) {
+        triggerToast("Đã cập nhật chế độ truy cập trang!", "success");
+      } else {
+        triggerToast("Lỗi khi cập nhật chế độ truy cập!", "error");
+      }
+    } finally {
+      setIsUpdatingLock(false);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<
     "overview" | "episodes" | "products" | "comments"
@@ -366,10 +402,7 @@ export default function Admin() {
               `${baseUrl}/api/stats?password=${import.meta.env.VITE_ADMIN_PASSWORD}`,
             );
 
-            console.log(statsRes);
-
             const statsData = await statsRes.json();
-            console.log(statsData, "ádadsasd");
 
             if (statsData.ok) {
               setTodayStats({
@@ -1184,30 +1217,134 @@ export default function Admin() {
                 </div>
               </div>
             </div>
-            {/* Khối thông tin chế độ gợi ý sản phẩm */}
+
+            {/* ⚙️ CHẾ ĐỘ TRUY CẬP TRANG (Khóa / Mở / Chỉ Sản Phẩm) */}
             <div className="bg-slate-950 p-6 rounded-2xl border border-white/5 md:col-span-full mb-6">
-              <h2 className="text-lg font-bold text-amber-500 mb-2">
-                ⚙️ Chế độ gợi ý sản phẩm Shopee
-              </h2>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Khi người dùng mở một series, hệ thống hiển thị một popup gợi ý
-                vài sản phẩm Shopee liên quan. Đây chỉ là gợi ý — nút "Xem ngay"
-                luôn hiển thị sẵn để xem nội dung ngay lập tức, không có thời
-                gian chờ hay yêu cầu bắt buộc click sản phẩm.
-              </p>
-              <div className="p-5 rounded-2xl border border-amber-500 bg-amber-500/[0.04]">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-3 h-3 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="font-bold text-white text-sm">
-                    Đang hoạt động: Popup gợi ý không chặn nội dung
+              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                <h2 className="text-lg font-bold text-amber-500">
+                  ⚙️ Chế độ truy cập trang
+                </h2>
+                {isUpdatingLock && (
+                  <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang cập
+                    nhật...
                   </span>
-                </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Người dùng truy cập và xem phim bình thường. Khi mở một
-                  series, popup gợi ý sản phẩm Shopee liên quan xuất hiện kèm
-                  nút "Xem ngay" có sẵn ngay từ đầu, để người dùng tự quyết định
-                  có quan tâm sản phẩm hay không.
-                </p>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                Chọn 1 trong 3 chế độ để điều khiển quyền truy cập của người
+                dùng vào trang Xem Phim và Bình Luận. Trang Sản Phẩm luôn hoạt
+                động bình thường ở cả 3 chế độ.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Option 1: Khóa Xem Phim + Bình Luận */}
+                <button
+                  onClick={() => handleChangeLockOption(LOCK_OPTION.LOCKED)}
+                  disabled={isUpdatingLock}
+                  className={`text-left p-5 rounded-2xl border transition-all disabled:opacity-60 ${
+                    lockOption === LOCK_OPTION.LOCKED
+                      ? "border-red-500 bg-red-500/[0.06] ring-1 ring-red-500/40"
+                      : "border-white/10 hover:border-white/20 bg-white/[0.02]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                        lockOption === LOCK_OPTION.LOCKED
+                          ? "bg-red-500/15 text-red-400"
+                          : "bg-white/5 text-slate-400"
+                      }`}
+                    >
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    {lockOption === LOCK_OPTION.LOCKED && (
+                      <span className="flex items-center gap-1.5 text-[10px] font-bold text-red-400 uppercase">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                        Đang áp dụng
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-bold text-white text-sm mb-1">
+                    Khóa Xem Phim & Bình Luận
+                  </p>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    2 trang này hiện icon khóa, người dùng không thao tác được.
+                    Trang Sản Phẩm vẫn hoạt động bình thường.
+                  </p>
+                </button>
+
+                {/* Option 2: Mở khóa tất cả */}
+                <button
+                  onClick={() => handleChangeLockOption(LOCK_OPTION.UNLOCKED)}
+                  disabled={isUpdatingLock}
+                  className={`text-left p-5 rounded-2xl border transition-all disabled:opacity-60 ${
+                    lockOption === LOCK_OPTION.UNLOCKED
+                      ? "border-emerald-500 bg-emerald-500/[0.06] ring-1 ring-emerald-500/40"
+                      : "border-white/10 hover:border-white/20 bg-white/[0.02]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                        lockOption === LOCK_OPTION.UNLOCKED
+                          ? "bg-emerald-500/15 text-emerald-400"
+                          : "bg-white/5 text-slate-400"
+                      }`}
+                    >
+                      <Unlock className="w-4 h-4" />
+                    </div>
+                    {lockOption === LOCK_OPTION.UNLOCKED && (
+                      <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 uppercase">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        Đang áp dụng
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-bold text-white text-sm mb-1">
+                    Mở khóa tất cả
+                  </p>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Toàn bộ trang hoạt động bình thường, người dùng tự do xem
+                    phim và bình luận.
+                  </p>
+                </button>
+
+                {/* Option 3: Chỉ hiện Sản Phẩm */}
+                <button
+                  onClick={() => handleChangeLockOption(LOCK_OPTION.SHOP_ONLY)}
+                  disabled={isUpdatingLock}
+                  className={`text-left p-5 rounded-2xl border transition-all disabled:opacity-60 ${
+                    lockOption === LOCK_OPTION.SHOP_ONLY
+                      ? "border-amber-500 bg-amber-500/[0.06] ring-1 ring-amber-500/40"
+                      : "border-white/10 hover:border-white/20 bg-white/[0.02]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                        lockOption === LOCK_OPTION.SHOP_ONLY
+                          ? "bg-amber-500/15 text-amber-400"
+                          : "bg-white/5 text-slate-400"
+                      }`}
+                    >
+                      <EyeOff className="w-4 h-4" />
+                    </div>
+                    {lockOption === LOCK_OPTION.SHOP_ONLY && (
+                      <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400 uppercase">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                        Đang áp dụng
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-bold text-white text-sm mb-1">
+                    Chỉ hiện Sản Phẩm
+                  </p>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Ẩn hoàn toàn 2 tab Xem Phim & Bình Luận, người dùng chỉ thấy
+                    tab Sản Phẩm.
+                  </p>
+                </button>
               </div>
             </div>
           </motion.div>

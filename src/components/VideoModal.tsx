@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { X, Sparkles, Tv, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { AnimeSeries, DbEpisode } from "@/src/types";
 
@@ -11,6 +11,7 @@ interface VideoModalProps {
     msg: string,
     type: "success" | "error" | "info",
   ) => void;
+  products?: { id?: string; name: string; image: string; link: string }[];
 }
 
 const getEmbedUrl = (url: string, iframeId: string) => {
@@ -58,9 +59,16 @@ export default function VideoModal({
   initialEpisodeIndex,
   onClose,
   triggerNotification,
+  products = [],
 }: VideoModalProps) {
   const validEpisodes = series.episodes.filter(
     (ep) => ep.src && ep.src.trim() !== "",
+  );
+
+  const randomProducts = useMemo(
+    () => [...products].sort(() => 0.5 - Math.random()).slice(0, 4),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [], // Chỉ random 1 lần khi modal mở
   );
 
   const [currentIndex, setCurrentIndex] = useState<number>(initialEpisodeIndex);
@@ -441,6 +449,39 @@ export default function VideoModal({
                   </button>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {!isSimpleMode && randomProducts.length > 0 && (
+          <div className="px-3 pb-3 bg-slate-900/30 border-t border-white/5">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-2">
+              👑 Chỉ dành cho fan đẳng cấp
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {randomProducts.map((p) => (
+                <a
+                  key={p.id}
+                  href={p.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex gap-2 items-center bg-slate-900 rounded-xl p-2 border border-white/5 hover:border-amber-500/40 transition-all group"
+                >
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    className="w-10 h-10 rounded-lg object-cover shrink-0 border border-white/10"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs text-slate-200 font-medium line-clamp-2 leading-tight">
+                      {p.name}
+                    </p>
+                    <span className="text-[10px] text-[#ee4d2d] font-bold mt-0.5 block group-hover:underline">
+                      Xem trên Shopee →
+                    </span>
+                  </div>
+                </a>
+              ))}
             </div>
           </div>
         )}

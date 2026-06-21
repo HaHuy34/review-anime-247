@@ -15,6 +15,7 @@ import {
   ShoppingBag,
   Film,
   MessageCircle,
+  Lock,
 } from "lucide-react";
 
 import CommentsPage from "@/src/components/CommentsPage";
@@ -23,6 +24,7 @@ import { AnimeSeries } from "@/src/types";
 import VideoModal from "@/src/components/VideoModal";
 import TrackingProvider from "./components/TrackingProvider";
 import { trackProductClick } from "./services/trackingService";
+import { LOCK_OPTION } from "@/src/services/configService";
 import { motion, AnimatePresence } from "motion/react";
 
 // ============================================================
@@ -256,30 +258,48 @@ function TabNav({
   theme,
   products,
   isLoadingProducts,
+  lockOption,
+  onLockedTabClick,
 }: {
   mainTab: MainTab;
   setMainTab: (t: MainTab) => void;
   theme: "dark" | "light";
   products: any[];
   isLoadingProducts: boolean;
+  lockOption: number;
+  onLockedTabClick?: () => void;
 }) {
   const MotionDiv = motion.div as any;
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
 
+  // Option 3: chỉ hiện tab Sản Phẩm
+  const visibleTabs =
+    lockOption === LOCK_OPTION.SHOP_ONLY
+      ? TABS.filter((t) => t.key === "shop")
+      : TABS;
+
+  // Option 1: khóa Xem Phim + Bình Luận
+  const isTabLocked = (key: MainTab) =>
+    lockOption === LOCK_OPTION.LOCKED && key !== "shop";
+
   const goTab = (key: MainTab) => {
+    if (isTabLocked(key)) {
+      onLockedTabClick?.();
+      return;
+    }
     setMainTab(key);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Tính position pill sau mỗi lần đổi tab
+  // Tính position pill sau mỗi lần đổi tab hoặc đổi lockOption
   useEffect(() => {
-    const idx = TABS.findIndex((t) => t.key === mainTab);
+    const idx = visibleTabs.findIndex((t) => t.key === mainTab);
     const el = tabRefs.current[idx];
     if (el) {
       setPillStyle({ left: el.offsetLeft, width: el.offsetWidth });
     }
-  }, [mainTab]);
+  }, [mainTab, lockOption]);
 
   return (
     <>
@@ -308,8 +328,9 @@ function TabNav({
             style={{ left: pillStyle.left, width: pillStyle.width }}
           />
 
-          {TABS.map(({ key, label, icon: Icon }, idx) => {
+          {visibleTabs.map(({ key, label, icon: Icon }, idx) => {
             const isActive = mainTab === key;
+            const locked = isTabLocked(key);
             return (
               <button
                 key={key}
@@ -317,21 +338,31 @@ function TabNav({
                   tabRefs.current[idx] = el;
                 }}
                 onClick={() => goTab(key)}
-                className="relative flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-[22px] text-xs font-semibold transition-colors duration-200 cursor-pointer select-none z-10"
+                className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-[22px] text-xs font-semibold transition-colors duration-200 select-none z-10
+                  ${locked ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
                 style={{ minWidth: 0 }}
               >
-                <Icon
-                  className="w-4 h-4 shrink-0 transition-colors duration-200"
-                  strokeWidth={isActive ? 2.5 : 2}
-                  style={{
-                    color: isActive
-                      ? "#0f172a"
-                      : theme === "dark"
-                        ? "#64748b"
-                        : "#94a3b8",
-                  }}
-                />
-                {isActive && (
+                {locked ? (
+                  <Lock
+                    className="w-4 h-4 shrink-0"
+                    style={{
+                      color: theme === "dark" ? "#64748b" : "#94a3b8",
+                    }}
+                  />
+                ) : (
+                  <Icon
+                    className="w-4 h-4 shrink-0 transition-colors duration-200"
+                    strokeWidth={isActive ? 2.5 : 2}
+                    style={{
+                      color: isActive
+                        ? "#0f172a"
+                        : theme === "dark"
+                          ? "#64748b"
+                          : "#94a3b8",
+                    }}
+                  />
+                )}
+                {isActive && !locked && (
                   <span className="whitespace-nowrap overflow-hidden text-ellipsis max-w-[80px] text-slate-950">
                     {label}
                   </span>
@@ -360,13 +391,15 @@ function TabNav({
           } backdrop-blur-md`}
       >
         <nav className="flex flex-col gap-0.5 p-3 flex-1 overflow-y-auto">
-          {TABS.map(({ key, label, icon: Icon }) => {
+          {visibleTabs.map(({ key, label, icon: Icon }) => {
             const isActive = mainTab === key;
+            const locked = isTabLocked(key);
             return (
               <button
                 key={key}
                 onClick={() => goTab(key)}
-                className={`relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer text-left group
+                className={`relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-left group
+                  ${locked ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
                   ${
                     isActive
                       ? theme === "dark"
@@ -381,11 +414,20 @@ function TabNav({
                   className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full transition-all duration-200
                     ${isActive ? "h-5 bg-amber-500" : "h-0 bg-transparent"}`}
                 />
-                <Icon
-                  className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110"
-                  strokeWidth={isActive ? 2.5 : 2}
-                />
+                {locked ? (
+                  <Lock className="w-4 h-4 shrink-0" />
+                ) : (
+                  <Icon
+                    className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110"
+                    strokeWidth={isActive ? 2.5 : 2}
+                  />
+                )}
                 <span className="flex-1">{label}</span>
+                {locked && (
+                  <span className="text-[9px] font-black uppercase text-slate-500">
+                    Đã khóa
+                  </span>
+                )}
                 {key === "shop" &&
                   !isLoadingProducts &&
                   products.length > 0 && (
@@ -451,6 +493,9 @@ export default function App() {
     type: "success" | "info" | "error";
   } | null>(null);
   const [totalVisits, setTotalVisits] = useState<number>(0);
+
+  // ── Chế độ khóa/ẩn trang (Admin điều khiển qua Firestore) ──
+  const [lockOption, setLockOption] = useState<number>(LOCK_OPTION.UNLOCKED);
 
   // scroll progress
   useEffect(() => {
@@ -533,13 +578,34 @@ export default function App() {
         .then((data: any[]) => {
           setProducts(data);
           setRandomHomeProducts(
-            [...data].sort(() => 0.5 - Math.random()).slice(0, 4),
+            [...data].sort(() => 0.5 - Math.random()).slice(0, 8),
           );
           setIsLoadingProducts(false);
         })
         .catch(() => setIsLoadingProducts(false));
     });
   }, []);
+
+  // Lắng nghe real-time chế độ khóa/ẩn trang do Admin cấu hình
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
+    import("@/src/services/configService").then(({ subscribeLockOption }) => {
+      unsub = subscribeLockOption(setLockOption);
+    });
+    return () => unsub?.();
+  }, []);
+
+  // Nếu đang ở tab bị khóa/ẩn mà Admin đổi chế độ -> tự đẩy về tab Sản Phẩm
+  useEffect(() => {
+    if (
+      (lockOption === LOCK_OPTION.LOCKED ||
+        lockOption === LOCK_OPTION.SHOP_ONLY) &&
+      mainTab !== "shop"
+    ) {
+      setMainTab("shop");
+      setIsModalOpen(false); // đóng luôn video đang phát (nếu có)
+    }
+  }, [lockOption, mainTab]);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") as "dark" | "light";
@@ -723,7 +789,7 @@ export default function App() {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-md animate-bounce max-w-sm text-left
+          className={`fixed top-[50px] left-1/2 -translate-x-1/2 w-full z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-md animate-bounce max-w-sm text-left
           ${toast.type === "success" ? "bg-emerald-950/90 border-emerald-500/20 text-emerald-300" : "bg-amber-950/90 border-amber-500/20 text-amber-300"}`}
         >
           <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -753,6 +819,13 @@ export default function App() {
           <div
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => {
+              if (
+                lockOption === LOCK_OPTION.LOCKED ||
+                lockOption === LOCK_OPTION.SHOP_ONLY
+              ) {
+                triggerToast("🔒 Trang Xem Phim đang tạm khóa", "info");
+                return;
+              }
               setMainTab("watch");
               setView("home");
             }}
@@ -797,6 +870,10 @@ export default function App() {
         theme={theme}
         products={products}
         isLoadingProducts={isLoadingProducts}
+        lockOption={lockOption}
+        onLockedTabClick={() =>
+          triggerToast("🔒 Trang này đang tạm khóa", "info")
+        }
       />
 
       {/* ── CONTENT ── */}
@@ -810,7 +887,7 @@ export default function App() {
       >
         <AnimatePresence mode="wait">
           {/* ════ TAB: 🎬 XEM PHIM ════ */}
-          {mainTab === "watch" && (
+          {mainTab === "watch" && lockOption !== LOCK_OPTION.LOCKED && (
             <AnimatedTab tabKey="watch">
               <div>
                 {/* HOME */}
@@ -945,10 +1022,10 @@ export default function App() {
                             </MotionSpan>
                           ))}
                         </h1>
-                        <p className="text-amber-500 font-semibold tracking-wide flex items-center justify-center gap-1.5 animate-bobble mt-[20px]">
+                        {/* <p className="text-amber-500 font-semibold tracking-wide flex items-center justify-center gap-1.5 animate-bobble mt-[20px]">
                           <Sparkles className="w-4 h-4 text-amber-500" />
                           <span>Cảm ơn cả nhà đã ghé thăm 👇</span>
-                        </p>
+                        </p> */}
                       </div>
                     </section>
 
@@ -1169,7 +1246,7 @@ export default function App() {
           )}
 
           {/* ════ TAB: 💬 BÌNH LUẬN ════ */}
-          {mainTab === "comments" && (
+          {mainTab === "comments" && lockOption !== LOCK_OPTION.LOCKED && (
             <AnimatedTab tabKey="comments">
               <CommentsPage theme={theme} />
             </AnimatedTab>
@@ -1180,7 +1257,7 @@ export default function App() {
             <AnimatedTab tabKey="shop">
               <div className="space-y-10">
                 {(isLoadingProducts || randomHomeProducts.length > 0) && (
-                  <section className="max-w-xl mx-auto md:hidden">
+                  <section className="max-w-xl mx-auto">
                     <div
                       className={`p-6 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
                     >
@@ -1194,7 +1271,7 @@ export default function App() {
                           theme={theme}
                         />
                       </h3>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
                         {isLoadingProducts
                           ? Array.from({ length: 4 }).map((_, i) => (
                               <ProductSkeleton key={i} theme={theme} />
@@ -1213,7 +1290,7 @@ export default function App() {
                 )}
 
                 {!isLoadingProducts && products.length > 0 && (
-                  <section>
+                  <section className="hidden">
                     <div
                       className={`p-6 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
                     >
@@ -1279,6 +1356,7 @@ export default function App() {
           initialEpisodeIndex={selectedEpisodeIndex}
           onClose={() => setIsModalOpen(false)}
           triggerNotification={triggerToast}
+          products={products}
         />
       )}
 
