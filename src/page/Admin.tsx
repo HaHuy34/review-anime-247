@@ -253,7 +253,7 @@ export default function Admin() {
     type: "success" | "info" | "error" = "success",
   ) => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 30000);
   };
 
   // Load comments realtime từ Firestore
@@ -639,7 +639,7 @@ export default function Admin() {
     <div className="min-h-screen bg-[#050508] text-slate-300 py-10 px-4 md:px-8 font-sans relative">
       {toast && (
         <div
-          className={`fixed top-[10%] right-[10%] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 duration-300 ${
+          className={`fixed top-20%] right-[10%] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 duration-300 ${
             toast.type === "success"
               ? "bg-emerald-500 text-white"
               : toast.type === "error"

@@ -21,7 +21,7 @@
 
 .text-gradient {
   background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
-  -webkit-background-clip: text;
+  /* -webkit-background-clip: text; */
   -webkit-text-fill-color: transparent;
 }
 
@@ -169,4 +169,7 @@
 
 .animate-gentle-sway {
   animation: gentle-sway 3s ease-in-out infinite;
+}
+.px-6.py-3.rounded-xl.shadow-2xl.flex.items-center.gap-3.z-50.animate-in.slide-in-from-bottom-5.duration-300.bg-emerald-500.text-white {
+  z-index: 9999999999999999999999999999999999999;
 }

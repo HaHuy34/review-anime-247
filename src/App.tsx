@@ -119,7 +119,7 @@ function ProductNameMarquee({
   if (!products || products.length === 0) return null;
   const names = products.map((p) => p.name).filter(Boolean);
   const loopNames = [...names, ...names];
-  const duration = Math.max(names.length * 4, 10);
+  const duration = Math.max(names.length * 4, 50);
   return (
     <div className="sm:hidden relative overflow-hidden w-full h-6">
       <div
@@ -192,6 +192,174 @@ function ProductCard({
         </span>
       </div>
     </a>
+  );
+}
+
+// ============================================================
+// ProductMarqueeRows — 2 hàng marquee ngược chiều (mobile only)
+// ============================================================
+function ProductMarqueeRows({
+  products,
+  theme,
+  onProductClick,
+  speedSeconds = 22,
+}: {
+  products: any[];
+  theme: "dark" | "light";
+  onProductClick: (p: any) => void;
+  speedSeconds?: number;
+}) {
+  if (!products || products.length === 0) return null;
+
+  const rowTop: any[] = [];
+  const rowBottom: any[] = [];
+  products.forEach((p, i) => (i % 2 === 0 ? rowTop : rowBottom).push(p));
+  const safeTop = rowTop.length ? rowTop : products;
+  const safeBottom = rowBottom.length ? rowBottom : products;
+
+  return (
+    <div className="sm:hidden w-full overflow-hidden space-y-5">
+      <MarqueeRow
+        products={safeTop}
+        theme={theme}
+        onProductClick={onProductClick}
+        direction="left"
+        speedSeconds={speedSeconds}
+      />
+      <MarqueeRow
+        products={safeBottom}
+        theme={theme}
+        onProductClick={onProductClick}
+        direction="right"
+        speedSeconds={speedSeconds}
+      />
+    </div>
+  );
+}
+
+function MarqueeRow({
+  products,
+  theme,
+  onProductClick,
+  direction,
+  speedSeconds,
+}: {
+  products: any[];
+  theme: "dark" | "light";
+  onProductClick: (p: any) => void;
+  direction: "left" | "right";
+  speedSeconds: number;
+}) {
+  // nhân đôi danh sách để track có thể lặp liền mạch (seamless loop)
+  const loopItems = [...products, ...products];
+  const dirSign = direction === "left" ? 1 : -1;
+
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const offsetRef = useRef(0); // độ lệch hiện tại (px)
+  const singleWidthRef = useRef(0); // chiều rộng của 1 vòng (1/2 track đã nhân đôi)
+  const draggingRef = useRef(false);
+  const pausedRef = useRef(false); // true khi đang chạm/hover
+  const startXRef = useRef(0);
+  const startOffsetRef = useRef(0);
+  const reducedMotionRef = useRef(false);
+
+  // Đo chiều rộng 1 vòng để tự chạy + để vuốt wrap vòng lặp đúng
+  useEffect(() => {
+    const measure = () => {
+      if (trackRef.current) {
+        singleWidthRef.current = trackRef.current.scrollWidth / 2;
+      }
+    };
+    measure();
+    if (typeof window !== "undefined") {
+      reducedMotionRef.current = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      window.addEventListener("resize", measure);
+      return () => window.removeEventListener("resize", measure);
+    }
+  }, [products]);
+
+  // Vòng lặp animation: tự chạy khi không kéo/không chạm, vuốt thì theo tay
+  useEffect(() => {
+    let rafId: number;
+    let lastTs: number | null = null;
+
+    const step = (ts: number) => {
+      if (lastTs == null) lastTs = ts;
+      const dt = ts - lastTs;
+      lastTs = ts;
+
+      const w = singleWidthRef.current;
+      if (
+        w > 0 &&
+        !draggingRef.current &&
+        !pausedRef.current &&
+        !reducedMotionRef.current
+      ) {
+        const pxPerMs = w / (speedSeconds * 1000);
+        offsetRef.current += dirSign * pxPerMs * dt;
+        offsetRef.current = ((offsetRef.current % w) + w) % w;
+      }
+      if (trackRef.current) {
+        trackRef.current.style.transform = `translateX(${-offsetRef.current}px)`;
+      }
+      rafId = requestAnimationFrame(step);
+    };
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
+  }, [speedSeconds, dirSign]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    draggingRef.current = true;
+    pausedRef.current = true;
+    startXRef.current = e.touches[0].clientX;
+    startOffsetRef.current = offsetRef.current;
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!draggingRef.current) return;
+    const deltaX = e.touches[0].clientX - startXRef.current;
+    const w = singleWidthRef.current || 1;
+    // vuốt sang trái (deltaX âm) -> nội dung trôi sang trái, và ngược lại
+    let next = startOffsetRef.current - deltaX;
+    next = ((next % w) + w) % w;
+    offsetRef.current = next;
+  };
+  const endTouch = () => {
+    draggingRef.current = false;
+    pausedRef.current = false;
+  };
+
+  return (
+    <div
+      className="overflow-hidden touch-pan-y"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={endTouch}
+      onTouchCancel={endTouch}
+      onMouseEnter={() => {
+        pausedRef.current = true;
+      }}
+      onMouseLeave={() => {
+        pausedRef.current = false;
+      }}
+    >
+      <div
+        ref={trackRef}
+        className="flex gap-3 w-max"
+        style={{ willChange: "transform" }}
+      >
+        {loopItems.map((p, i) => (
+          <div key={`${p.id}-${direction}-${i}`} className="w-[45vw] shrink-0">
+            <ProductCard
+              product={p}
+              theme={theme}
+              onProductClick={onProductClick}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -1020,10 +1188,6 @@ export default function App() {
                             </MotionSpan>
                           ))}
                         </h1>
-                        {/* <p className="text-amber-500 font-semibold tracking-wide flex items-center justify-center gap-1.5 animate-bobble mt-[20px]">
-                          <Sparkles className="w-4 h-4 text-amber-500" />
-                          <span>Cảm ơn cả nhà đã ghé thăm 👇</span>
-                        </p> */}
                       </div>
                     </section>
 
@@ -1222,7 +1386,7 @@ export default function App() {
                     {products.length > 0 && (
                       <section style={{ marginTop: "3rem" }}>
                         <div
-                          className={`p-6 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
+                          className={`p-3 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
                         >
                           <h3 className="font-display text-xl text-[#ee4d2d] font-black pb-4 mb-4 border-b-2 border-dashed border-[#ee4d2d]/20 flex items-center gap-2">
                             <span className="text-2xl">🛍️</span> MẪU ĐẸP AE THAM
@@ -1265,7 +1429,7 @@ export default function App() {
                 {(isLoadingProducts || randomHomeProducts.length > 0) && (
                   <section className="max-w-6xl mx-auto">
                     <div
-                      className={`p-6 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
+                      className={`p-3 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
                     >
                       <h3 className="font-display text-xl text-[#ee4d2d] font-black pb-4 mb-4 border-b-2 border-dashed border-[#ee4d2d]/20 flex items-center gap-2">
                         <span className="text-2xl">⭐</span>
@@ -1277,12 +1441,24 @@ export default function App() {
                           theme={theme}
                         />
                       </h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
-                        {isLoadingProducts
-                          ? Array.from({ length: 4 }).map((_, i) => (
-                              <ProductSkeleton key={i} theme={theme} />
-                            ))
-                          : randomHomeProducts.map((p) => (
+
+                      {isLoadingProducts ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+                          {Array.from({ length: 4 }).map((_, i) => (
+                            <ProductSkeleton key={i} theme={theme} />
+                          ))}
+                        </div>
+                      ) : (
+                        <>
+                          {/* Mobile: 2 hàng marquee ngược chiều */}
+                          <ProductMarqueeRows
+                            products={randomHomeProducts}
+                            theme={theme}
+                            onProductClick={handleProductClick}
+                          />
+                          {/* sm trở lên: grid như cũ */}
+                          <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+                            {randomHomeProducts.map((p) => (
                               <ProductCard
                                 key={p.id}
                                 product={p}
@@ -1290,7 +1466,9 @@ export default function App() {
                                 onProductClick={handleProductClick}
                               />
                             ))}
-                      </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </section>
                 )}
@@ -1298,7 +1476,7 @@ export default function App() {
                 {!isLoadingProducts && products.length > 0 && (
                   <section className="hidden">
                     <div
-                      className={`p-6 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
+                      className={`p-3 rounded-3xl shadow-xl text-left border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10 text-slate-800"}`}
                     >
                       <h3 className="font-display text-xl text-[#ee4d2d] font-black pb-4 mb-4 border-b-2 border-dashed border-[#ee4d2d]/20 flex items-center gap-2">
                         <span className="text-2xl">🛍️</span> TẤT CẢ SẢN PHẨM
@@ -1322,7 +1500,7 @@ export default function App() {
 
                 {isLoadingProducts && (
                   <div
-                    className={`p-6 rounded-3xl border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10"}`}
+                    className={`p-3 rounded-3xl border ${theme === "dark" ? "bg-[#0c0c14] border-white/5" : "bg-white border-black/10"}`}
                   >
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                       {Array.from({ length: 8 }).map((_, i) => (
