@@ -1,6 +1,8 @@
 export interface DbEpisode {
   name: string; // e.g: "Tập 136"
   src: string; // Dailymotion embed link
+  status?: "scheduled" | "published" | string;
+  scheduledAt?: number;
 }
 
 export interface AnimeSeries {
@@ -25,3 +27,5 @@ export interface Episode {
   name: string;
   src: string;
 }
+
+

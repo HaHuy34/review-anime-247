@@ -140,6 +140,52 @@ function CommentAvatar({
     </div>
   );
 }
+function ScheduledBadge({
+  scheduledAt,
+  epId,
+}: {
+  scheduledAt: number;
+  epId: string;
+}) {
+  const [remaining, setRemaining] = useState(scheduledAt - Date.now());
+
+  useEffect(() => {
+    if (remaining <= 0) {
+      (async () => {
+        const { doc, updateDoc } = await import("firebase/firestore");
+        const { db } = await import("@/src/firebase/config");
+        await updateDoc(doc(db, "episodes", epId), {
+          status: "published",
+          scheduledAt: null,
+        });
+      })();
+      return;
+    }
+    const id = setInterval(() => setRemaining(scheduledAt - Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [scheduledAt, epId, remaining]);
+
+  if (remaining <= 0) return null;
+
+  const totalSecs = Math.floor(remaining / 1000);
+  const h = Math.floor(totalSecs / 3600);
+  const m = Math.floor((totalSecs % 3600) / 60);
+  const s = totalSecs % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const label =
+    h > 0
+      ? `${h}g ${pad(m)}p ${pad(s)}s`
+      : m > 0
+        ? `${pad(m)}p ${pad(s)}s`
+        : `${s}s`;
+
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-violet-500/15 text-violet-400 border border-violet-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">
+      <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+      Sắp chiếu · {label}
+    </span>
+  );
+}
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -224,6 +270,8 @@ export default function Admin() {
   const [episodeNum, setEpisodeNum] = useState("");
   const [episodeName, setEpisodeName] = useState("");
   const [link, setLink] = useState("");
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [productName, setProductName] = useState("");
   const [productImage, setProductImage] = useState("");
@@ -483,6 +531,9 @@ export default function Admin() {
         episode: Number(episodeNum),
         name: episodeName,
         src: link,
+        status: isScheduled && scheduledAt ? "scheduled" : "published",
+        scheduledAt:
+          isScheduled && scheduledAt ? new Date(scheduledAt).getTime() : null,
       };
       if (editingId) {
         await updateEpisode(editingId, data);
@@ -538,6 +589,17 @@ export default function Admin() {
     setEpisodeNum(ep.episode.toString());
     setEpisodeName(ep.name);
     setLink(ep.src);
+    if (ep.status === "scheduled" && ep.scheduledAt) {
+      setIsScheduled(true);
+      const d = new Date(ep.scheduledAt);
+      const pad = (n: number) => String(n).padStart(2, "0");
+      setScheduledAt(
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`,
+      );
+    } else {
+      setIsScheduled(false);
+      setScheduledAt("");
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -597,6 +659,8 @@ export default function Admin() {
     setProductImage("");
     setProductLink("");
     setProductDescription("");
+    setIsScheduled(false);
+    setScheduledAt("");
   };
 
   const convertDailymotionLink = (url: string) => {
@@ -1696,6 +1760,58 @@ export default function Admin() {
                           </div>
                         )}
                       </div>
+                      {/* Toggle lên lịch */}
+                      <div className="border-t border-white/5 pt-4 space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsScheduled((v) => !v)}
+                          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                            isScheduled
+                              ? "border-violet-500/50 bg-violet-500/10 text-violet-400"
+                              : "border-white/10 bg-white/[0.02] text-slate-400 hover:text-white hover:border-white/20"
+                          }`}
+                        >
+                          <span className="flex items-center gap-2 font-medium text-sm">
+                            <span className="text-base">🕐</span>
+                            Lên lịch phát sóng
+                          </span>
+                          <div
+                            className={`w-10 h-5 rounded-full transition-colors relative ${isScheduled ? "bg-violet-500" : "bg-slate-700"}`}
+                          >
+                            <div
+                              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isScheduled ? "translate-x-5" : "translate-x-0.5"}`}
+                            />
+                          </div>
+                        </button>
+
+                        {isScheduled && (
+                          <div className="space-y-1">
+                            <label className="block text-xs font-medium text-slate-400">
+                              Ngày & Giờ phát sóng
+                            </label>
+                            <input
+                              type="datetime-local"
+                              className="w-full bg-slate-900 text-white border border-white/10 p-3 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none transition-colors text-sm [color-scheme:dark]"
+                              value={scheduledAt}
+                              min={new Date().toISOString().slice(0, 16)}
+                              onChange={(e) => setScheduledAt(e.target.value)}
+                            />
+                            {scheduledAt && (
+                              <p className="text-[11px] text-violet-400 flex items-center gap-1 mt-1">
+                                📅 Sẽ phát lúc{" "}
+                                {new Date(scheduledAt).toLocaleString("vi-VN", {
+                                  weekday: "short",
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
                       <div className="pt-4">
                         <button
                           type="submit"
@@ -1785,6 +1901,58 @@ export default function Admin() {
                           value={productLink}
                           onChange={(e) => setProductLink(e.target.value)}
                         />
+                      </div>
+                      {/* Toggle lên lịch */}
+                      <div className="border-t border-white/5 pt-4 space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsScheduled((v) => !v)}
+                          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                            isScheduled
+                              ? "border-violet-500/50 bg-violet-500/10 text-violet-400"
+                              : "border-white/10 bg-white/[0.02] text-slate-400 hover:text-white hover:border-white/20"
+                          }`}
+                        >
+                          <span className="flex items-center gap-2 font-medium text-sm">
+                            <span className="text-base">🕐</span>
+                            Lên lịch phát sóng
+                          </span>
+                          <div
+                            className={`w-10 h-5 rounded-full transition-colors relative ${isScheduled ? "bg-violet-500" : "bg-slate-700"}`}
+                          >
+                            <div
+                              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isScheduled ? "translate-x-5" : "translate-x-0.5"}`}
+                            />
+                          </div>
+                        </button>
+
+                        {isScheduled && (
+                          <div className="space-y-1">
+                            <label className="block text-xs font-medium text-slate-400">
+                              Ngày & Giờ phát sóng
+                            </label>
+                            <input
+                              type="datetime-local"
+                              className="w-full bg-slate-900 text-white border border-white/10 p-3 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none transition-colors text-sm [color-scheme:dark]"
+                              value={scheduledAt}
+                              min={new Date().toISOString().slice(0, 16)}
+                              onChange={(e) => setScheduledAt(e.target.value)}
+                            />
+                            {scheduledAt && (
+                              <p className="text-[11px] text-violet-400 flex items-center gap-1 mt-1">
+                                📅 Sẽ phát lúc{" "}
+                                {new Date(scheduledAt).toLocaleString("vi-VN", {
+                                  weekday: "short",
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="pt-4">
                         <button
@@ -1892,14 +2060,18 @@ export default function Admin() {
                                   {ep.episode}
                                 </div>
                                 <div className="truncate">
-                                  <div className="flex items-center">
+                                  <div className="flex items-center gap-2 flex-wrap">
                                     <h3 className="font-semibold text-slate-200 truncate">
                                       {ep.name}
                                     </h3>
-                                    <span className="flex items-center ml-[57px] text-gray-500 gap-2 text-[12px]">
-                                      <Eye className="w-4 h-4" />
-                                      900
-                                    </span>
+                                    {ep.status === "scheduled" &&
+                                      ep.scheduledAt &&
+                                      ep.scheduledAt > Date.now() && (
+                                        <ScheduledBadge
+                                          scheduledAt={ep.scheduledAt}
+                                          epId={ep.id}
+                                        />
+                                      )}
                                   </div>
                                   <a
                                     href={ep.src}

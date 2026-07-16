@@ -173,3 +173,7 @@
 .px-6.py-3.rounded-xl.shadow-2xl.flex.items-center.gap-3.z-50.animate-in.slide-in-from-bottom-5.duration-300.bg-emerald-500.text-white {
   z-index: 9999999999999999999999999999999999999;
 }
+
+/* span.absolute.top-1\.5.text-\[8px\].font-black.bg-amber-500.text-slate-950.min-w-\[14px\].h-\[14px\].px-1.rounded-full.flex.items-center.justify-center.leading-none {
+  right: 55px;
+} */

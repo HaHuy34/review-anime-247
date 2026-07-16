@@ -425,7 +425,7 @@ export default function VideoModal({
               </span>
             </div>
             <div
-              className="flex items-center gap-2 overflow-x-auto pb-1"
+              className="flex items-center gap-2 overflow-x-auto pb-3"
               style={{ scrollbarWidth: "thin" }}
             >
               {validEpisodes.map((ep: any, index: any) => {

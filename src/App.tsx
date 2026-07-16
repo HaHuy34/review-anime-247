@@ -16,6 +16,8 @@ import {
   Film,
   MessageCircle,
   Lock,
+  ShoppingCart,
+  Link2,
 } from "lucide-react";
 
 import CommentsPage from "@/src/components/CommentsPage";
@@ -25,7 +27,144 @@ import VideoModal from "@/src/components/VideoModal";
 import TrackingProvider from "./components/TrackingProvider";
 import { trackProductClick } from "./services/trackingService";
 import { LOCK_OPTION } from "@/src/services/configService";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useMotionValue } from "motion/react";
+
+function AdGateModal({
+  theme,
+  products,
+  onSkip,
+}: {
+  theme: "dark" | "light";
+  products: any[];
+  onSkip: () => void;
+}) {
+  const MotionDiv = motion.div as any;
+  const DURATION = 5; // giây
+  const [secondsLeft, setSecondsLeft] = useState(DURATION);
+
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [secondsLeft]);
+
+  const canSkip = secondsLeft <= 0;
+  const adProducts = products.slice(0, 8);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <MotionDiv
+        initial={{ opacity: 0, scale: 0.92, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: 20 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-4xl max-h-[85vh] rounded-3xl overflow-hidden shadow-2xl bg-[#fdf6ec] text-slate-800 flex flex-col"
+      >
+        {/* Header */}
+        <div className="px-6 pt-6 pb-5 text-center border-b border-amber-900/10 shrink-0">
+          <h2 className="font-display text-lg sm:text-xl font-black text-slate-900">
+            Đang chuẩn bị video... 🚀
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
+            Trong lúc chờ đợi, mỗi lượt ghé thăm của bạn đều góp phần giúp{" "}
+            <strong>AD</strong>{" "}
+            <span className="font-bold text-amber-600">
+              duy trì server và phát triển hoàn toàn miễn phí.
+            </span>
+          </p>
+          <p className="text-sm mt-2 text-slate-600">
+            Cảm ơn bạn rất nhiều! 💗
+          </p>
+        </div>
+
+        {/* Ad grid */}
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="grid grid-cols-2 min-[687px]:grid-cols-3 gap-3">
+            {adProducts.map((p) => (
+              <a
+                key={p.id}
+                href={p.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative flex flex-col bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-amber-500/60 transition-colors"
+              >
+                <span className="absolute top-0 left-0 bg-[#ee4d2d] text-white text-[9px] font-bold px-2 py-0.5 rounded-br-md z-10">
+                  Shopee
+                </span>
+                <div className="aspect-square w-full bg-slate-100">
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-2 space-y-1.5">
+                  <p className="text-[11px] font-semibold line-clamp-2 leading-tight text-slate-800">
+                    {p.name}
+                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                      <Link2 className="w-3 h-3" />
+                      shopee.vn
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-[#ee4d2d] bg-[#ee4d2d]/10 px-2 py-1 rounded-full">
+                      <ShoppingCart className="w-3 h-3" />
+                      Xem Thêm
+                    </span>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div className="px-4 py-3 border-t border-amber-900/10 flex justify-end shrink-0 bg-[#fdf6ec]">
+          <button
+            onClick={canSkip ? onSkip : undefined}
+            disabled={!canSkip}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all 
+              ${
+                canSkip
+                  ? "bg-[lab(16.1051%_-1.18239_-11.7533)] text-white cursor-pointer"
+                  : "bg-[lab(16.1051%_-1.18239_-11.7533)] text-white cursor-not-allowed"
+              }`}
+          >
+            {!canSkip && (
+              <span className="relative w-4 h-4 shrink-0">
+                <svg className="w-4 h-4 -rotate-90" viewBox="0 0 20 20">
+                  <circle
+                    cx="10"
+                    cy="10"
+                    r="8"
+                    fill="none"
+                    stroke="#e2e8f0"
+                    strokeWidth="2"
+                  />
+                  <circle
+                    cx="10"
+                    cy="10"
+                    r="8"
+                    fill="none"
+                    stroke="#f59e0b"
+                    strokeWidth="2"
+                    strokeDasharray={2 * Math.PI * 8}
+                    strokeDashoffset={
+                      2 * Math.PI * 8 * (secondsLeft / DURATION)
+                    }
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+            )}
+            {canSkip
+              ? "Bỏ qua quảng cáo"
+              : `Bỏ qua quảng cáo sau ${secondsLeft} s`}
+          </button>
+        </div>
+      </MotionDiv>
+    </div>
+  );
+}
 
 // ============================================================
 // DonateModal
@@ -48,7 +187,7 @@ function DonateModal({
         initial={{ opacity: 0, scale: 0.1, x: origin.x, y: origin.y }}
         animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
         exit={{ opacity: 0, scale: 0.1, x: origin.x, y: origin.y }}
-        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
         className={`relative w-full max-w-sm rounded-3xl p-6 shadow-2xl border flex flex-col items-center text-center donate-sparkle-border ${
           theme === "dark"
             ? "bg-[#13131c] border-white/10 text-white"
@@ -63,7 +202,7 @@ function DonateModal({
           <X className="w-5 h-5" />
         </button>
         <h2 className="font-display text-xl sm:text-2xl font-black text-amber-500 mb-4">
-          1đ cũng quý
+          Kam-Sa-Ham-Ni-Ta
         </h2>
         <MotionDiv
           initial={{ opacity: 0, scale: 0.6, rotate: -6 }}
@@ -75,13 +214,14 @@ function DonateModal({
             type: "spring",
             bounce: 0.35,
           }}
-          className="relative p-3 rounded-2xl bg-white donate-qr-glow"
+          className="relative p-1 rounded-2xl bg-white donate-qr-glow"
         >
           <img
             src={qrSrc}
             alt="QR Code Donate"
             className="w-56 h-56 sm:w-64 sm:h-64 object-contain rounded-xl"
           />
+          <div className="absolute top-[13px] left-[60px] w-[60px] h-[10px] rounded-lg bg-white/80" />
         </MotionDiv>
         <p
           className={`text-xs mt-5 font-medium ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
@@ -192,6 +332,86 @@ function ProductCard({
         </span>
       </div>
     </a>
+  );
+}
+
+// ============================================================
+// FloatingAdNotifications — popup quảng cáo góc màn hình
+// ============================================================
+function FloatingAdNotifications({
+  products,
+  theme,
+  onProductClick,
+}: {
+  products: any[];
+  theme: "dark" | "light";
+  onProductClick: (p: any) => void;
+}) {
+  const [visibleAds, setVisibleAds] = useState<any[]>([]);
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!products || products.length === 0) return;
+    const shuffled = [...products].sort(() => 0.5 - Math.random());
+    setVisibleAds(shuffled.slice(0, 3));
+    setDismissed(new Set());
+  }, [products]);
+
+  const activeAds = visibleAds.filter((p) => !dismissed.has(p.id));
+
+  if (activeAds.length === 0) return null;
+
+  return (
+    <div className="fixed bottom-16 right-4 z-50 flex flex-col gap-2 w-[300px] sm:w-[450px]">
+      {activeAds.map((p) => (
+        <div
+          key={p.id}
+          className={`relative flex items-center h-[100px] gap-3 px-[12px] py-[1px] rounded-xl border shadow-xl backdrop-blur-sm
+    ${
+      theme === "dark"
+        ? "bg-[#13131c] border-white/10"
+        : "bg-white border-slate-200"
+    }`}
+        >
+          <button
+            onClick={() => setDismissed((prev) => new Set(prev).add(p.id))}
+            className="absolute top-1 right-1 p-0.5 rounded-full hover:bg-black/10 cursor-pointer"
+            aria-label="Đóng"
+          >
+            <X
+              className={`w-3 h-3 ${theme === "dark" ? "text-slate-500" : "text-slate-400"}`}
+            />
+          </button>
+
+          <img
+            src={p.image}
+            alt={p.name}
+            className="w-18 h-18 rounded-lg object-cover shrink-0"
+          />
+
+          <div className="flex-1 min-w-0 pr-3">
+            <p
+              className={`text-[16px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${
+                theme === "dark" ? "text-slate-200" : "text-slate-800"
+              }`}
+            >
+              {p.name}
+            </p>
+            <div className="flex items-center justify-between mt-4.5">
+              <span className="text-[11px] font-bold bg-[#ee4d2d]/10 text-[#ee4d2d] px-2.5 py-1.5 rounded-full">
+                Shopee
+              </span>
+              <button
+                onClick={() => onProductClick(p)}
+                className="text-[11px] font-bold bg-[#ee4d2d] text-white px-3 py-2 rounded-full hover:bg-[#d8431e] transition-colors cursor-pointer"
+              >
+                Mua ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -539,7 +759,7 @@ function TabNav({
                   !isActive &&
                   !isLoadingProducts &&
                   products.length > 0 && (
-                    <span className="absolute top-1.5 right-2.5 text-[8px] font-black bg-amber-500 text-slate-950 min-w-[14px] h-[14px] px-1 rounded-full flex items-center justify-center leading-none">
+                    <span className="absolute hidden top-1.5 right-2 text-[8px] font-black bg-amber-500 text-slate-950 min-w-[14px] h-[14px] px-1 rounded-full flex items-center justify-center leading-none">
                       {products.length}
                     </span>
                   )}
@@ -644,8 +864,7 @@ export default function App() {
   const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(true);
   const [selectedEpisodeIndex, setSelectedEpisodeIndex] = useState<number>(0);
   const [isDonateModalOpen, setIsDonateModalOpen] = useState<boolean>(false);
-  const donateQrSrc =
-    "https://i.pinimg.com/564x/f1/02/0d/f1020d0e788e185df92fbc5d207b5ab1.jpg";
+  const donateQrSrc = "/src/images/qr.jpg";
   const donateCloudRef = useRef<HTMLDivElement | null>(null);
   const [donateOrigin, setDonateOrigin] = useState<{ x: number; y: number }>({
     x: 0,
@@ -664,6 +883,9 @@ export default function App() {
 
   // ── Chế độ khóa/ẩn trang (Admin điều khiển qua Firestore) ──
   const [lockOption, setLockOption] = useState<number>(LOCK_OPTION.UNLOCKED);
+
+  const [isAdModalOpen, setIsAdModalOpen] = useState<boolean>(false);
+  const [pendingSeries, setPendingSeries] = useState<AnimeSeries | null>(null);
 
   // scroll progress
   useEffect(() => {
@@ -716,11 +938,19 @@ export default function App() {
               if (idx !== -1) list[idx] = { ...list[idx], ...ep };
               else list.push({ name: ep.name, src: ep.src });
             });
-            return list.sort(
-              (a: any, b: any) =>
-                (a.episode || parseInt(a.name.replace(/\D/g, "")) || 0) -
-                (b.episode || parseInt(b.name.replace(/\D/g, "")) || 0),
-            );
+            return list
+              .sort(
+                (a: any, b: any) =>
+                  (a.episode || parseInt(a.name.replace(/\D/g, "")) || 0) -
+                  (b.episode || parseInt(b.name.replace(/\D/g, "")) || 0),
+              )
+              .filter((ep: any) => {
+                // Ẩn tập scheduled chưa đến giờ
+                if (ep.status === "scheduled" && ep.scheduledAt) {
+                  return ep.scheduledAt <= Date.now();
+                }
+                return true;
+              });
           };
           setMovies((prev) =>
             prev.map((m) =>
@@ -812,13 +1042,22 @@ export default function App() {
   };
 
   const handleTimelineClick = (series: AnimeSeries) => {
-    setSelectedMovie(series);
+    setPendingSeries(series);
+    setIsAdModalOpen(true);
+  };
+
+  const proceedToEpisodes = () => {
+    if (!pendingSeries) return;
+    setSelectedMovie(pendingSeries);
     setView("episodes");
     fetch("/api/series-click", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ seriesTitle: series.title }),
+      body: JSON.stringify({ seriesTitle: pendingSeries.title }),
     }).catch(() => {});
+    setIsAdModalOpen(false);
+    setPendingSeries(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const getLatestEpisodeNum = (series: AnimeSeries) => {
@@ -852,28 +1091,73 @@ export default function App() {
 
   const handleEpisodeClick = (epNum: number) => {
     if (!selectedMovie) return;
+
     const padded = `Tập ${String(epNum).padStart(2, "0")}`;
     const short = `Tập ${epNum}`;
     const list = selectedMovie.episodes;
+
     const foundIdx = list.findIndex(
       (v: any) => v.name === padded || v.name === short,
     );
-    if (foundIdx !== -1 && list[foundIdx].src) {
-      const valid = list.filter((ep: any) => ep.src?.trim());
-      const finalIdx = valid.findIndex(
-        (e: any) => e.name === list[foundIdx].name,
-      );
-      setIsModalOpen(true);
-      setSelectedEpisodeIndex(finalIdx);
+
+    // Không tìm thấy tập này trong danh sách (data không khớp số)
+    if (foundIdx === -1) {
       triggerToast(
-        `🎬 Đang phát: ${selectedMovie.title} - ${list[foundIdx].name}`,
-        "success",
+        `❌ Không tìm thấy Tập ${String(epNum).padStart(2, "0")} trong danh sách.`,
+        "error",
       );
-    } else {
-      alert(
-        `Tập ${String(epNum).padStart(2, "0")} hiện tại admin chưa tải lên. Scroll để xem các tập bên dưới ↓ ĐÃ RA MẮT`,
-      );
+      return;
     }
+
+    const ep = list[foundIdx];
+
+    // Chặn tập scheduled chưa đến giờ
+    if (
+      ep.status === "scheduled" &&
+      ep.scheduledAt &&
+      ep.scheduledAt > Date.now()
+    ) {
+      const d = new Date(ep.scheduledAt);
+      triggerToast(
+        `🕐 Tập này sẽ phát lúc ${d.toLocaleString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
+        "info",
+      );
+      return;
+    }
+
+    // Tập chưa có nguồn video hợp lệ (admin chưa tải lên)
+    if (!ep.src?.trim()) {
+      triggerToast(
+        `⏳ Tập ${String(epNum).padStart(2, "0")} hiện admin chưa tải lên. Scroll xuống xem các tập đã ra mắt ↓`,
+        "info",
+      );
+      return;
+    }
+
+    // Hợp lệ → mở modal và phát
+    const valid = list.filter((e: any) => e.src?.trim());
+    const finalIdx = valid.findIndex((e: any) => e.name === ep.name);
+
+    if (finalIdx === -1) {
+      // Phòng hờ: lý thuyết không xảy ra vì ep.src đã trim hợp lệ ở trên
+      triggerToast(
+        "❌ Có lỗi khi xác định tập phim, vui lòng thử lại.",
+        "error",
+      );
+      return;
+    }
+
+    setIsModalOpen(true);
+    setSelectedEpisodeIndex(finalIdx);
+    triggerToast(
+      `🎬 Đang phát: ${selectedMovie.title} - ${ep.name}`,
+      "success",
+    );
   };
 
   const sortedMovies = [...movies].sort((a, b) => a.orderNum - b.orderNum);
@@ -1203,7 +1487,7 @@ export default function App() {
                         <div className="relative pl-2 space-y-6">
                           <div className="absolute left-[17px] top-4 bottom-8 w-0.5 bg-gradient-to-b from-amber-500 to-amber-500/10 pointer-events-none" />
                           <div className="space-y-6">
-                            {sortedMovies.slice(0, 3).map((item, i) => (
+                            {sortedMovies.slice(0, 4).map((item, i) => (
                               <MotionDiv
                                 key={item.id}
                                 initial={{ opacity: 0, y: 15 }}
@@ -1234,7 +1518,7 @@ export default function App() {
                               style={{ overflow: "hidden" }}
                               className="space-y-6"
                             >
-                              {sortedMovies.slice(3).map((item) => (
+                              {sortedMovies.slice(4).map((item) => (
                                 <TimelineItem
                                   key={item.id}
                                   item={item}
@@ -1245,7 +1529,7 @@ export default function App() {
                           </div>
                         </div>
                         {isMobile && (
-                          <div className="mt-3 flex flex-col items-center justify-center relative z-20">
+                          <div className="mt-1 flex flex-col items-center justify-center relative z-20">
                             <div className="w-px h-6 bg-amber-500/30 border-dashed border-l mb-2" />
                             <MotionButton
                               whileHover={{ scale: 1.05 }}
@@ -1262,7 +1546,7 @@ export default function App() {
                                 <>
                                   <ChevronDown className="w-4 h-4 animate-bounce" />
                                   <span>
-                                    Xem tiếp {sortedMovies.length - 3} phần khác
+                                    Xem tiếp {sortedMovies.length - 4} phần khác
                                   </span>
                                 </>
                               )}
@@ -1277,6 +1561,11 @@ export default function App() {
                 {/* EPISODES */}
                 {view === "episodes" && selectedMovie && (
                   <div className="space-y-8 text-left">
+                    <FloatingAdNotifications
+                      products={products}
+                      theme={theme}
+                      onProductClick={handleProductClick}
+                    />
                     <button
                       onClick={() => setView("home")}
                       className={`px-4 py-2.5 rounded-xl text-xs font-bold border flex items-center gap-2 w-fit cursor-pointer transition-colors
@@ -1552,6 +1841,16 @@ export default function App() {
             qrSrc={donateQrSrc}
             origin={donateOrigin}
             onClose={() => setIsDonateModalOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isAdModalOpen && (
+          <AdGateModal
+            theme={theme}
+            products={products}
+            onSkip={proceedToEpisodes}
           />
         )}
       </AnimatePresence>
